@@ -16,6 +16,7 @@
     },
     "android": {
       "package": "com.menmastore.admin",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#060501"
       }
