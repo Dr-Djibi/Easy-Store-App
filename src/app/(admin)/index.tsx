@@ -1,36 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { getProducts } from '../../lib/products';
-import { getOrders } from '../../lib/orders';
-import { Package, ShoppingBag, DollarSign, CheckCircle } from 'lucide-react-native';
+import React, { useEffect } from 'react';
+import { ScrollView, View, Text, StyleSheet, RefreshControl } from 'react-native';
+import { Package, ShoppingBag, DollarSign } from 'lucide-react-native';
+import { useProducts } from '@/hooks/useProducts';
+import { useOrders } from '@/hooks/useOrders';
+import { StatCard } from '@/components/ui';
+import { COLORS, SPACING, FONT_SIZE } from '@/constants/theme';
 
 export default function DashboardScreen() {
-  const [loading, setLoading] = useState(true);
-  const [productCount, setProductCount] = useState(0);
-  const [orderCount, setOrderCount] = useState(0);
-  const [totalRevenue, setTotalRevenue] = useState(0);
+  const { products, loading: loadingP, refresh: refreshP } = useProducts();
+  const { orders, loading: loadingO, refresh: refreshO } = useOrders();
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [prods, ords] = await Promise.all([getProducts(), getOrders()]);
-      setProductCount(prods.length);
-      setOrderCount(ords.length);
-      const rev = ords.reduce((acc, curr) => acc + (Number(curr.montant) || 0), 0);
-      setTotalRevenue(rev);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = loadingP || loadingO;
+  const totalRevenue = orders.reduce((acc, o) => acc + (Number(o.montant) || 0), 0);
 
   useEffect(() => {
-    loadData();
+    refreshP();
+    refreshO();
   }, []);
+
+  const handleRefresh = () => {
+    refreshP();
+    refreshO();
+  };
 
   return (
     <ScrollView
       contentContainerStyle={styles.container}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={loadData} tintColor="#facc15" />}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={COLORS.ACCENT} />
+      }
     >
       <View style={styles.header}>
         <Text style={styles.welcome}>Tableau de bord 📊</Text>
@@ -38,23 +36,22 @@ export default function DashboardScreen() {
       </View>
 
       <View style={styles.grid}>
-        <View style={styles.statCard}>
-          <Package color="#facc15" size={24} />
-          <Text style={styles.statNumber}>{productCount}</Text>
-          <Text style={styles.statLabel}>Produits enregistrés</Text>
-        </View>
-
-        <View style={styles.statCard}>
-          <ShoppingBag color="#38bdf8" size={24} />
-          <Text style={styles.statNumber}>{orderCount}</Text>
-          <Text style={styles.statLabel}>Commandes reçues</Text>
-        </View>
-
-        <View style={[styles.statCard, styles.fullWidth]}>
-          <DollarSign color="#4ade80" size={24} />
-          <Text style={styles.statNumber}>{Math.round(totalRevenue).toLocaleString('fr-FR')} GNF</Text>
-          <Text style={styles.statLabel}>Chiffre d'affaires estimé</Text>
-        </View>
+        <StatCard
+          icon={<Package color={COLORS.ACCENT} size={24} />}
+          value={products.length}
+          label="Produits enregistrés"
+        />
+        <StatCard
+          icon={<ShoppingBag color={COLORS.INFO} size={24} />}
+          value={orders.length}
+          label="Commandes reçues"
+        />
+        <StatCard
+          icon={<DollarSign color={COLORS.SUCCESS} size={24} />}
+          value={`${Math.round(totalRevenue).toLocaleString('fr-FR')} GNF`}
+          label="Chiffre d'affaires estimé"
+          style={styles.fullWidth}
+        />
       </View>
     </ScrollView>
   );
@@ -62,50 +59,29 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: '#060501',
+    padding: SPACING.xl,
+    backgroundColor: COLORS.BG_PRIMARY,
     flexGrow: 1,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: SPACING.xxl,
   },
   welcome: {
-    fontSize: 24,
+    fontSize: FONT_SIZE.xxxl,
     fontWeight: '900',
-    color: '#fef9e7',
+    color: COLORS.TEXT_PRIMARY,
   },
   subtitle: {
-    fontSize: 13,
-    color: 'rgba(254, 249, 231, 0.65)',
-    marginTop: 4,
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.TEXT_MUTED,
+    marginTop: SPACING.xs,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: '#100e04',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 18,
-    padding: 16,
-    justifyContent: 'center',
+    gap: SPACING.md,
   },
   fullWidth: {
     minWidth: '100%',
-  },
-  statNumber: {
-    fontSize: 22,
-    fontWeight: 'black',
-    color: '#fef9e7',
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: 'rgba(254, 249, 231, 0.65)',
   },
 });

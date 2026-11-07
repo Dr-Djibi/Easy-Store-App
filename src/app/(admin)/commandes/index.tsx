@@ -1,41 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
-import { getOrders, updateOrderStatus } from '../../../lib/orders';
-import { formatPrice } from '../../../lib/utils';
-import type { Order } from '../../../types';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { useOrders } from '@/hooks/useOrders';
+import { StatusBadge, EmptyState } from '@/components/ui';
+import { formatPrice } from '@/lib/utils';
+import { COLORS, SPACING, RADII, FONT_SIZE } from '@/constants/theme';
+import type { Order } from '@/types';
 
 export default function OrdersScreen() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      const data = await getOrders();
-      setOrders(data);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { orders, loading, refresh, changeStatus } = useOrders();
 
   useEffect(() => {
-    load();
+    refresh();
   }, []);
-
-  const handleChangeStatus = (order: Order) => {
-    const statuses: Order['statut'][] = ['nouveau', 'confirmé', 'livré', 'annulé'];
-    Alert.alert(
-      'Mettre à jour le statut',
-      `Modifier l'état de la commande pour ${order.product_nom}`,
-      statuses.map((st) => ({
-        text: st.toUpperCase(),
-        onPress: async () => {
-          await updateOrderStatus(order.id, st);
-          load();
-        },
-      }))
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -44,15 +20,18 @@ export default function OrdersScreen() {
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor="#facc15" />}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={COLORS.ACCENT} />
+        }
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleChangeStatus(item)} style={styles.card}>
+        ListEmptyComponent={
+          !loading ? <EmptyState message="Aucune commande reçue pour le moment." icon="🛒" /> : null
+        }
+        renderItem={({ item }: { item: Order }) => (
+          <TouchableOpacity onPress={() => changeStatus(item)} style={styles.card}>
             <View style={styles.headerRow}>
               <Text style={styles.productName}>{item.product_nom}</Text>
-              <View style={[styles.badge, getBadgeStyle(item.statut)]}>
-                <Text style={styles.badgeText}>{item.statut.toUpperCase()}</Text>
-              </View>
+              <StatusBadge statut={item.statut} />
             </View>
 
             <Text style={styles.amount}>
@@ -77,88 +56,66 @@ export default function OrdersScreen() {
   );
 }
 
-function getBadgeStyle(statut: string) {
-  switch (statut) {
-    case 'confirmé':
-      return { backgroundColor: 'rgba(56, 189, 248, 0.2)' };
-    case 'livré':
-      return { backgroundColor: 'rgba(74, 222, 128, 0.2)' };
-    case 'annulé':
-      return { backgroundColor: 'rgba(239, 68, 68, 0.2)' };
-    default:
-      return { backgroundColor: 'rgba(250, 204, 21, 0.2)' };
-  }
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#060501',
-    padding: 20,
+    backgroundColor: COLORS.BG_PRIMARY,
+    padding: SPACING.xl,
   },
   title: {
-    fontSize: 22,
+    fontSize: FONT_SIZE.xxl,
     fontWeight: '900',
-    color: '#fef9e7',
-    marginBottom: 20,
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: SPACING.xl,
   },
   list: {
-    gap: 12,
-    paddingBottom: 24,
+    gap: SPACING.md,
+    paddingBottom: SPACING.xxl,
   },
   card: {
-    backgroundColor: '#100e04',
+    backgroundColor: COLORS.BG_CARD,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 16,
-    padding: 16,
+    borderColor: COLORS.BORDER,
+    borderRadius: RADII.xxl,
+    padding: SPACING.lg,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: SPACING.sm,
   },
   productName: {
-    fontSize: 15,
+    fontSize: FONT_SIZE.lg,
     fontWeight: 'bold',
-    color: '#fef9e7',
+    color: COLORS.TEXT_PRIMARY,
     flex: 1,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#fef9e7',
+    marginRight: SPACING.sm,
   },
   amount: {
-    fontSize: 13,
+    fontSize: FONT_SIZE.sm,
     fontWeight: 'bold',
-    color: '#facc15',
-    marginBottom: 10,
+    color: COLORS.ACCENT,
+    marginBottom: SPACING.sm + 2,
   },
   detailsBox: {
-    backgroundColor: '#18160a',
-    borderRadius: 10,
-    padding: 10,
-    gap: 4,
+    backgroundColor: COLORS.BG_INPUT,
+    borderRadius: RADII.lg,
+    padding: SPACING.sm + 2,
+    gap: SPACING.xs,
   },
   detailText: {
-    fontSize: 12,
-    color: 'rgba(254, 249, 231, 0.65)',
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.TEXT_MUTED,
   },
   detailVal: {
-    color: '#fef9e7',
+    color: COLORS.TEXT_PRIMARY,
     fontWeight: '600',
   },
   date: {
-    fontSize: 10,
-    color: 'rgba(254, 249, 231, 0.4)',
-    marginTop: 8,
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.TEXT_FAINT,
+    marginTop: SPACING.sm,
     textAlign: 'right',
   },
 });
