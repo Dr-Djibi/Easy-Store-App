@@ -45,6 +45,7 @@ export interface StoreSettings {
   ORDER_SUCCESS_MSG: string;
   FOOTER_TEXT: string;
   THEME: string;
+  STORE_COLOR: string;
 }
 
 export interface Order {

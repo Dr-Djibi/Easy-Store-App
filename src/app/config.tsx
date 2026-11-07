@@ -6,11 +6,11 @@ import { createClient } from '@supabase/supabase-js';
 
 export default function ConfigScreen() {
   const router = useRouter();
-  const { setConfig } = useSupabaseStore();
+  const { setConfig, url: currentUrl, anonKey: currentAnonKey, serviceKey: currentServiceKey } = useSupabaseStore();
 
-  const [url, setUrl] = useState('');
-  const [anonKey, setAnonKey] = useState('');
-  const [serviceKey, setServiceKey] = useState('');
+  const [url, setUrl] = useState(currentUrl || '');
+  const [anonKey, setAnonKey] = useState(currentAnonKey || '');
+  const [serviceKey, setServiceKey] = useState(currentServiceKey || '');
   const [loading, setLoading] = useState(false);
 
   const testAndSave = async () => {
