@@ -1,3 +1,4 @@
+import 'react-native-url-polyfill/auto';
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -6,14 +7,17 @@ import { useAuthStore } from '../store/authStore';
 
 export default function RootLayout() {
   const { loadConfig, client } = useSupabaseStore();
-  const { setSession } = useAuthStore();
+  const { setSession, setLoading } = useAuthStore();
 
   useEffect(() => {
     loadConfig();
   }, []);
 
   useEffect(() => {
-    if (!client) return;
+    if (!client) {
+      setLoading(false);
+      return;
+    }
 
     client.auth.getSession().then(({ data: { session } }) => {
       setSession(session);

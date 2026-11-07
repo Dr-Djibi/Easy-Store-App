@@ -8,6 +8,7 @@ interface SupabaseStore {
   serviceKey: string | null;
   client: SupabaseClient | null;
   isConfigured: boolean;
+  isReady: boolean;
   loadConfig: () => Promise<void>;
   setConfig: (url: string, anonKey: string, serviceKey: string) => Promise<void>;
   clearConfig: () => Promise<void>;
@@ -19,6 +20,7 @@ export const useSupabaseStore = create<SupabaseStore>((set) => ({
   serviceKey: null,
   client: null,
   isConfigured: false,
+  isReady: false,
 
   loadConfig: async () => {
     try {
@@ -34,10 +36,13 @@ export const useSupabaseStore = create<SupabaseStore>((set) => ({
             persistSession: true,
           },
         });
-        set({ url, anonKey, serviceKey, client, isConfigured: true });
+        set({ url, anonKey, serviceKey, client, isConfigured: true, isReady: true });
+      } else {
+        set({ isReady: true });
       }
     } catch (e) {
       console.error('Erreur chargement config Supabase:', e);
+      set({ isReady: true });
     }
   },
 
@@ -54,11 +59,11 @@ export const useSupabaseStore = create<SupabaseStore>((set) => ({
       },
     });
 
-    set({ url, anonKey, serviceKey, client, isConfigured: true });
+    set({ url, anonKey, serviceKey, client, isConfigured: true, isReady: true });
   },
 
   clearConfig: async () => {
     await AsyncStorage.multiRemove(['sb_url', 'sb_anon', 'sb_service']);
-    set({ url: null, anonKey: null, serviceKey: null, client: null, isConfigured: false });
+    set({ url: null, anonKey: null, serviceKey: null, client: null, isConfigured: false, isReady: true });
   },
 }));
