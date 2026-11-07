@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useOrders } from '@/hooks/useOrders';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { StatusBadge, EmptyState } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
-import { COLORS, SPACING, RADII, FONT_SIZE } from '@/constants/theme';
+import { SPACING, RADII, FONT_SIZE } from '@/constants/theme';
 import type { Order } from '@/types';
 
 function formatDate(dateStr: string) {
@@ -18,6 +19,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function OrdersScreen() {
+  const { colors, isDark } = useAppTheme();
   const { orders, loading, refresh, changeStatus } = useOrders();
 
   useEffect(() => {
@@ -25,39 +27,51 @@ export default function OrdersScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Commandes Reçues ({orders.length})</Text>
+    <View style={[styles.container, { backgroundColor: colors.BG_PRIMARY }]}>
+      <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Commandes Reçues ({orders.length})</Text>
 
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={COLORS.ACCENT} />
+          <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.ACCENT} />
         }
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           !loading ? <EmptyState message="Aucune commande reçue pour le moment." icon="🛒" /> : null
         }
         renderItem={({ item }: { item: Order }) => (
-          <TouchableOpacity onPress={() => changeStatus(item)} style={styles.card}>
+          <TouchableOpacity
+            onPress={() => changeStatus(item)}
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.BG_CARD,
+                borderColor: colors.BORDER,
+                shadowColor: colors.TEXT_PRIMARY,
+                shadowOpacity: isDark ? 0 : 0.04,
+                elevation: isDark ? 0 : 2,
+              },
+            ]}
+          >
             <View style={styles.headerRow}>
-              <Text style={styles.productName}>{item.product_nom}</Text>
+              <Text style={[styles.productName, { color: colors.TEXT_PRIMARY }]}>{item.product_nom}</Text>
               <StatusBadge statut={item.statut} />
             </View>
 
-            <Text style={styles.amount}>
+            <Text style={[styles.amount, { color: colors.ACCENT }]}>
               Quantité : {item.quantite} • Total : {formatPrice(item.montant)}
             </Text>
 
-            <View style={styles.detailsBox}>
+            <View style={[styles.detailsBox, { backgroundColor: colors.BG_INPUT }]}>
               {Object.entries(item.fields_data || {}).map(([key, val], i) => (
-                <Text key={i} style={styles.detailText}>
-                  • {key} : <Text style={styles.detailVal}>{String(val)}</Text>
+                <Text key={i} style={[styles.detailText, { color: colors.TEXT_MUTED }]}>
+                  • {key} : <Text style={[styles.detailVal, { color: colors.TEXT_PRIMARY }]}>{String(val)}</Text>
                 </Text>
               ))}
             </View>
 
-            <Text style={styles.date}>
+            <Text style={[styles.date, { color: colors.TEXT_FAINT }]}>
               {formatDate(item.created_at)}
             </Text>
           </TouchableOpacity>
@@ -70,62 +84,55 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG_PRIMARY,
-    padding: SPACING.xl,
+    padding: SPACING.lg,
   },
   title: {
     fontSize: FONT_SIZE.xxl,
     fontWeight: '900',
-    color: COLORS.TEXT_PRIMARY,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
+    letterSpacing: -0.5,
   },
   list: {
     gap: SPACING.md,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: 110, // Dégagement barre basse flottante
   },
   card: {
-    backgroundColor: COLORS.BG_CARD,
     borderWidth: 1,
-    borderColor: COLORS.BORDER,
     borderRadius: RADII.xxl,
     padding: SPACING.lg,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.xs,
   },
   productName: {
     fontSize: FONT_SIZE.lg,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '800',
     flex: 1,
     marginRight: SPACING.sm,
   },
   amount: {
     fontSize: FONT_SIZE.sm,
-    fontWeight: 'bold',
-    color: COLORS.ACCENT,
-    marginBottom: SPACING.sm + 2,
+    fontWeight: '800',
+    marginBottom: SPACING.sm,
   },
   detailsBox: {
-    backgroundColor: COLORS.BG_INPUT,
     borderRadius: RADII.lg,
     padding: SPACING.sm + 2,
     gap: SPACING.xs,
   },
   detailText: {
     fontSize: FONT_SIZE.sm,
-    color: COLORS.TEXT_MUTED,
   },
   detailVal: {
-    color: COLORS.TEXT_PRIMARY,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   date: {
     fontSize: FONT_SIZE.xs,
-    color: COLORS.TEXT_FAINT,
     marginTop: SPACING.sm,
     textAlign: 'right',
   },

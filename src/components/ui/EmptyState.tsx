@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, SPACING, FONT_SIZE } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { SPACING, FONT_SIZE } from '@/constants/theme';
 
 interface EmptyStateProps {
   message?: string;
@@ -8,10 +9,11 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ message = 'Aucun élément.', icon = '📭' }: EmptyStateProps) {
+  const { colors } = useAppTheme();
   return (
     <View style={styles.container}>
       <Text style={styles.icon}>{icon}</Text>
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.message, { color: colors.TEXT_MUTED }]}>{message}</Text>
     </View>
   );
 }
@@ -21,7 +23,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 50,
   },
   icon: {
     fontSize: 40,
@@ -29,7 +31,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: FONT_SIZE.sm,
-    color: COLORS.TEXT_MUTED,
     textAlign: 'center',
+    fontWeight: '500',
   },
 });

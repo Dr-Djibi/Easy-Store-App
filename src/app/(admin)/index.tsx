@@ -3,11 +3,13 @@ import { ScrollView, View, Text, StyleSheet, RefreshControl } from 'react-native
 import { Package, ShoppingBag, DollarSign } from 'lucide-react-native';
 import { useProducts } from '@/hooks/useProducts';
 import { useOrders } from '@/hooks/useOrders';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { StatCard } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
-import { COLORS, SPACING, FONT_SIZE } from '@/constants/theme';
+import { SPACING, FONT_SIZE } from '@/constants/theme';
 
 export default function DashboardScreen() {
+  const { colors } = useAppTheme();
   const { products, loading: loadingP, refresh: refreshP } = useProducts();
   const { orders, loading: loadingO, refresh: refreshO } = useOrders();
 
@@ -26,29 +28,32 @@ export default function DashboardScreen() {
 
   return (
     <ScrollView
+      style={[styles.scroll, { backgroundColor: colors.BG_PRIMARY }]}
       contentContainerStyle={styles.container}
       refreshControl={
-        <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={COLORS.ACCENT} />
+        <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={colors.ACCENT} />
       }
     >
       <View style={styles.header}>
-        <Text style={styles.welcome}>Tableau de bord 📊</Text>
-        <Text style={styles.subtitle}>Aperçu en temps réel de votre activité.</Text>
+        <Text style={[styles.welcome, { color: colors.TEXT_PRIMARY }]}>Tableau de bord 📊</Text>
+        <Text style={[styles.subtitle, { color: colors.TEXT_MUTED }]}>
+          Aperçu instantané des performances de votre boutique.
+        </Text>
       </View>
 
       <View style={styles.grid}>
         <StatCard
-          icon={<Package color={COLORS.ACCENT} size={24} />}
+          icon={<Package color={colors.ACCENT} size={24} />}
           value={products.length}
-          label="Produits enregistrés"
+          label="Articles au catalogue"
         />
         <StatCard
-          icon={<ShoppingBag color={COLORS.INFO} size={24} />}
+          icon={<ShoppingBag color={colors.INFO} size={24} />}
           value={orders.length}
-          label="Commandes reçues"
+          label="Commandes enregistrées"
         />
         <StatCard
-          icon={<DollarSign color={COLORS.SUCCESS} size={24} />}
+          icon={<DollarSign color={colors.SUCCESS} size={24} />}
           value={formatPrice(totalRevenue)}
           label="Chiffre d'affaires estimé"
           style={styles.fullWidth}
@@ -59,23 +64,25 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
   container: {
-    padding: SPACING.xl,
-    backgroundColor: COLORS.BG_PRIMARY,
-    flexGrow: 1,
+    padding: SPACING.lg,
+    paddingBottom: 110, // Dégagement barre basse flottante
   },
   header: {
-    marginBottom: SPACING.xxl,
+    marginBottom: SPACING.xl,
   },
   welcome: {
     fontSize: FONT_SIZE.xxxl,
     fontWeight: '900',
-    color: COLORS.TEXT_PRIMARY,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: FONT_SIZE.sm,
-    color: COLORS.TEXT_MUTED,
     marginTop: SPACING.xs,
+    fontWeight: '500',
   },
   grid: {
     flexDirection: 'row',

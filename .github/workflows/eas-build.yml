@@ -68,6 +68,41 @@ jobs:
           [ -z "$PROFILE" ] && PROFILE="preview"
           PLATFORM="${{ inputs.platform }}"
           [ -z "$PLATFORM" ] && PLATFORM="android"
-          eas build --platform "$PLATFORM" --profile "$PROFILE" --non-interactive
+          eas build --platform "$PLATFORM" --profile "$PROFILE" --non-interactive --json > build_output.json
+          cat build_output.json
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📥 Download & Rename APK
+        id: download-apk
+        run: |
+          mkdir -p output
+          ARTIFACT_URL=$(node -e '
+            try {
+              const fs = require("fs");
+              const data = JSON.parse(fs.readFileSync("build_output.json", "utf8"));
+              const item = Array.isArray(data) ? data[0] : data;
+              console.log(item.artifacts?.buildUrl || item.artifacts?.applicationArchiveUrl || "");
+            } catch (e) {
+              console.log("");
+            }
+          ')
+          
+          echo "Artifact URL: $ARTIFACT_URL"
+          if [ -n "$ARTIFACT_URL" ]; then
+            TIMESTAMP=$(date +'%Y%m%d_%H%M')
+            FILENAME="EasyStore-Admin-v1.0.0-${TIMESTAMP}.apk"
+            curl -L "$ARTIFACT_URL" -o "output/$FILENAME"
+            echo "apk_file=output/$FILENAME" >> $GITHUB_OUTPUT
+            echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          else
+            echo "Aucune URL d'artefact trouvée."
+          fi
+
+      - name: 📤 Upload APK to GitHub Artifacts
+        if: steps.download-apk.outputs.apk_file != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.download-apk.outputs.filename }}
+          path: ${{ steps.download-apk.outputs.apk_file }}
+          retention-days: 30
