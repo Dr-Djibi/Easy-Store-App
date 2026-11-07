@@ -11,3 +11,4 @@ web-build
 *.p12
 *.key
 *.mobileprovision
+*.tsbuildinfo

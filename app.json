@@ -11,9 +11,11 @@
       "backgroundColor": "#060501"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.menmastore.admin"
     },
     "android": {
+      "package": "com.menmastore.admin",
       "adaptiveIcon": {
         "backgroundColor": "#060501"
       }
