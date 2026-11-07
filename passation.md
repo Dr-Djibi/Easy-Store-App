@@ -1,110 +1,87 @@
 # 📋 Passation de Session & Suivi Technique (passation.md)
 
-Ce document sert de **mémoire persistante entre chaque session d'IA et de développement**.
-Il récapitule l'historique complet, l'état exact du projet, ce qui a été achevé, et la feuille de route des tâches restantes.
+Ce document sert de **mémoire persistante inter-sessions** basée sur les principes **ECC (Evidence-based Agentic Coding) & Graphify**.
+Il retrace l'historique d'exécution exact, les décisions architecturales prises, l'état validé par tests et la feuille de route des fonctionnalités à implémenter.
 
 ---
 
-## 📅 Dernière Mise à Jour : 7 Novembre 2026 (02:10 UTC)
+## 📅 Dernière Mise à Jour : 7 Novembre 2026 (13:15 UTC)
 
 ---
 
-## 🎯 Objectif du Projet
-Créer un écosystème e-commerce auto-hébergé (**Easy-Store**) sans dépendance multi-tenant SaaS, composé de :
-1. **Un Storefront Web (Next.js)** déployable sur Vercel avec rendu modulaire de blocs de vente (copywriting Maestro) et tunnel WhatsApp.
-2. **Une Application Mobile Admin (React Native Expo)** permettant au propriétaire de connecter sa propre instance Supabase ("Bring-Your-Own-Supabase"), d'ajouter/ordonner des blocs de contenu et de piloter les commandes.
+## 🧭 Graphe de Connaissances & Dépendances du Projet (Graphify)
+
+```
+[Supabase Backend] ◄── RLS / Schema / Storage
+      ▲
+      │ (API REST & Realtime)
+      ├─────────────────────────────────────────┐
+      │                                         │
+[Storefront Web (Next.js 15)]       [Admin Mobile (Expo SDK 52)]
+├── Tailwind CSS v4                  ├── Expo Router v4 (file-based)
+├── OrderTunnel (WhatsApp)           ├── Hooks Custom ECC (@/hooks/*)
+└── ContentBlockRenderer             ├── Design Tokens (@/constants/theme)
+                                     ├── Composants UI Atomiques (@/components/ui/*)
+                                     └── EAS Build (APK Standalone Android)
+```
 
 ---
 
-## 🚀 Référentiels Git & Branches Dédiées par Problème
+## 🛠️ Journal des Interventions Récentes & Corrections Critiques
 
-### Storefront Web (`Dr-Djibi/Easy-Store`)
-| Branche | Statut | Description |
-|---|---|---|
-| `main` | Stable | Branche de production |
-| `feat/impeccable-ui-ux` | Base | Branche de fonctionnalités UX / UI |
-| `fix/postcss-tailwind-config` | ✅ Prêt | Ajout de `postcss.config.mjs` pour la compilation Tailwind CSS v4 |
-| `fix/supabase-resilience` | ✅ Prêt | Sécurisation des clients Supabase avec placeholders (évite les crashs de build) |
-| `fix/product-page-errors` | ✅ Prêt | Gestion try-catch et `.maybeSingle()` sur `/produit/[slug]` |
-| `fix/settings-and-utils-robustness` | ✅ Prêt | Sécurisation templating WhatsApp, parsing `ORDER_FIELDS` et UUID commande |
-| `feat/out-of-stock-handling` | ✅ Prêt | Gestion dynamique du stock épuisé dans `OrderTunnel` avec CTA réassort |
+### 1. Résolution de l'Échec EAS Build Android (#6 & #7)
+* **Problème 1 (Metro Root Resolution) :** Expo Router cherchait `app/` à la racine, or les routes se trouvent dans `src/app/`.
+  * *Correction :* Création de `babel.config.js` avec `module-resolver`, `metro.config.js` avec alias `@/*` pointant sur `src/`, et ajout de `"root": "./src/app"` dans `app.json`.
+* **Problème 2 (Package manquant pour le pré-build) :** EAS Build signalait `The required package expo-asset cannot be found`.
+  * *Correction :* Installation officielle de `expo-asset` avec intégration de son config plugin.
+* **Problème 3 (Incompatibilité Regex Hermes) :** Échec de compilation du bytecode JS avec `hermesc` (`Invalid flags /.../v` dans `query-string v9`).
+  * *Correction :* Installation de `query-string@7.1.3` (100% compatible avec le moteur Hermes).
+* **Preuve de validation locale :** Exécution réussie de `npx expo export --platform android` générant l'archive hermes bytecode de 5.24 MB sans aucun avertissement bloquant.
 
-### Application Mobile Admin (`Dr-Djibi/Easy-Store-App`)
-| Branche | Statut | Description |
-|---|---|---|
-| `main` | Stable | Branche de production |
-| `feat/apk-eas-workflow` | Base | Workflow CI/CD GitHub Actions & configuration EAS APK |
-| `fix/eas-android-package-id` | ✅ Prêt | Ajout de `package: com.menmastore.admin` dans `app.json` requis par EAS Build |
-| `fix/startup-race-condition` | ✅ Prêt | Ajout du drapeau `isReady` dans `useSupabaseStore` (fin des faux redirects `/config`) |
-| `fix/admin-dashboard-styles` | ✅ Prêt | Remplacement de `fontWeight: 'black'` par `'900'`, dates déterministes et badges |
-| `fix/admin-settings-and-logout` | ✅ Prêt | Appel explicite de `client.auth.signOut()`, retour d'erreur précis et pré-remplissage |
-| `feat/native-image-upload` | ✅ Prêt | Intégration de `expo-image-picker` pour l'upload direct vers Supabase Storage |
+### 2. Refactorisation ECC de l'Application Mobile
+* **Centralisation Design Impeccable UI/UX Pro Max :**
+  * Création de `src/constants/theme.ts` définissant la palette monochrome chaude (`#060501`, `#100e04`, `#18160a`, `#facc15`, `#38bdf8`, `#4ade80`, `#ef4444`) et les métriques de grille.
+* **Composants d'Interface Réutilisables (`src/components/ui/`) :**
+  * `LoadingScreen`, `EmptyState`, `StatusBadge`, `FormField`, `StatCard`.
+* **Découplage Logique Métier via Hooks Custom (`src/hooks/`) :**
+  * `useProducts.ts` : cycle de vie des produits, bascule de visibilité, suppression avec confirmation.
+  * `useOrders.ts` : gestion des commandes reçues et mise à jour des statuts.
+  * `useSettings.ts` : chargement et sauvegarde sécurisée avec validation des retours d'erreurs.
+* **Documentation & Règles Agents :**
+  * Création de [`CLAUDE.md`](file:///home/menma/Shop%20Project/menma-store-app/CLAUDE.md) à la racine de l'app mobile.
 
----
-
-## ✅ Ce qui est Fait et Validé
-
-### 1. Base de Données & Schéma Supabase (`supabase/schema.sql`)
-- [x] Table `products` avec champ `content_blocks JSONB` pour supporter les blocs modulaires.
-- [x] Table `orders` pour enregistrer l'historique des commandes avec champs dynamiques `fields_data JSONB`.
-- [x] Table `settings` pour la configuration boutique (Nom, Logo, WhatsApp, Devise, Textes, Thème).
-- [x] Politiques de sécurité **Row Level Security (RLS)** actives :
-  - Lecture publique limitée aux produits actifs (`actif = true`).
-  - Insertion publique autorisée pour les commandes visiteurs.
-  - CRUD et administration réservés à l'admin authentifié (`auth.role() = 'authenticated'`).
-- [x] Configuration des buckets Supabase Storage (`products` et `assets`) avec leurs politiques d'accès.
-
-### 2. Storefront Web (`menma-store` -> `Easy-Store`)
-- [x] Architecture Next.js 15 App Router avec TailwindCSS v4 et variables de thèmes CSS.
-- [x] **En-têtes de sécurité HTTP** configurés dans [`src/middleware.ts`](file:///home/menma/Shop%20Project/menma-store/src/middleware.ts).
-- [x] **Composants d'accueil** : `HeroBanner`, `ProductGrid`, `ProductCard`, `ReassuranceBar`.
-- [x] **Page Produit `/produit/[slug]`** :
-  - Galerie photos interactive.
-  - Tunnel de commande `OrderTunnel` : double mode (Direct WhatsApp ou Formulaire dynamique vers WhatsApp).
-  - Composant `ContentBlockRenderer` : rendu ordonné des blocs personnalisés [Titre + Paragraphe + Image].
-- [x] **Page Contact `/contact`** : Coordonnées, bouton WhatsApp direct, formulaire instantané.
-- [x] Routes API Next.js :
-  - `POST /api/orders` : enregistre la commande en base Supabase.
-  - `GET /api/products` : expose les produits actifs.
-
-### 3. Application Mobile Admin (`menma-store-app` -> `Easy-Store-App`)
-- [x] Structure Expo Router avec thème sombre soigné.
-- [x] Écran de liaison dynamique **`config.tsx`** : saisie et test en temps réel.
-- [x] Écran de connexion admin **`login.tsx`** (Supabase Auth).
-- [x] Navigation par onglets `(admin)` :
-  - **Tableau de bord** : Statistiques réelles (Total produits, commandes, chiffre d'affaires).
-  - **Gestion des Produits** : Liste avec toggle visibilité, suppression et redirection édition.
-  - **Formulaire Produit (`nouveau.tsx` et `[id].tsx`)** : Titre, prix, stock, description, image avec sélecteur natif.
-  - **Composant `BlockEditor.tsx`** : Ajout illimité de blocs avec boutons pour monter, descendre, supprimer et uploader.
-  - **Gestion des Commandes** : Liste des commandes avec badge de statut et mise à jour.
-  - **Réglages** : Modification de la boutique et déconnexion sécurisée.
-
-### 4. Automatisation CI/CD & Build APK
-- [x] Création du fichier [`eas.json`](file:///home/menma/Shop%20Project/menma-store-app/eas.json) configuré pour générer des fichiers **APK directs** (`buildType: "apk"` pour les profils `preview` et `production`).
-- [x] Création du workflow GitHub Actions [`.github/workflows/eas-build.yml`](file:///home/menma/Shop%20Project/menma-store-app/.github/workflows/eas-build.yml) permettant de lancer la compilation de l'APK manuellement via GitHub Actions (`workflow_dispatch`) ou lors de la publication d'un tag/release.
-- [x] Création du workflow OTA [`.github/workflows/eas-update.yml`](file:///home/menma/Shop%20Project/menma-store-app/.github/workflows/eas-update.yml) pour déployer les mises à jour en direct sans recompiler l'APK.
+### 3. Résolution des Conflits Git avec `origin/main`
+* Fusion propre avec la branche `main` qui avait reçu la PR `#10`.
+* Intégration harmonieuse des fonctions de formatage de date (`formatDate`) et de déconnexion sécurisée (`signOut` Supabase).
 
 ---
 
-## ⏳ Ce qu'il Reste à Faire (Roadmap & Prochaines Étapes)
+## 🎯 Feuille de Route : Nouvelles Fonctionnalités à Implémenter (ECC Workflow)
 
-### Étape 1 : Exécution côté utilisateur (Pré-requis Déploiement)
-- [ ] Exécuter le script [`supabase/schema.sql`](file:///home/menma/Shop%20Project/supabase/schema.sql) dans le SQL Editor de Supabase.
-- [ ] Créer l'utilisateur administrateur dans **Supabase > Authentication > Users**.
-- [ ] Déployer le dépôt `Dr-Djibi/Easy-Store` sur **Vercel** avec les variables :
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `SUPABASE_SERVICE_ROLE_KEY`
+Les tâches suivantes doivent respecter le workflow **Eval-First & TDD** préconisé par ECC :
 
-### Étape 2 : Améliorations Futures (sur les branches dédiées)
-- [ ] **Notifications sonores / push** lors d'une nouvelle commande dans l'app mobile via Expo Notifications.
-- [ ] **Recherche & Filtrage avancé** sur la grille de produits du site web (par mot-clé ou par catégorie si ajoutée).
-- [ ] **Génération de tickets / reçus PDF** pour les commandes livrées.
+### Phase 1 : Expérience Mobile Admin (Priorité Haute)
+- [ ] **Notifications Push & Sonores lors d'une nouvelle commande :**
+  * Intégration de `expo-notifications` avec trigger Supabase Database Webhook ou écoute Realtime Supabase (`supabase.channel('orders')`).
+  * Alerte sonore distincte à l'arrivée d'une commande "nouveau".
+- [ ] **Filtres et Recherche Instantanée des Commandes :**
+  * Onglets de filtre par statut (`Toutes`, `Nouvelles`, `Confirmées`, `Livrées`, `Annulées`).
+  * Recherche par nom de client ou nom de produit dans `useOrders`.
+- [ ] **Statistiques Avancées sur le Dashboard :**
+  * Chiffre d'affaires filtrable par période (Aujourd'hui, 7 jours, Ce mois).
+  * Indicateur des produits en rupture de stock (`stock === 0`).
+
+### Phase 2 : Expérience Client Web & Conversion (Priorité Moyenne)
+- [ ] **Revue et Notation Client (Avis vérifiés) :**
+  * Ajout d'une table `reviews` sur Supabase avec modération admin dans l'app mobile.
+- [ ] **Bannière d'Urgence / Compte à Rebours Promotionnel :**
+  * Bloc configurable dans `settings` (titre, date de fin, réduction) avec affichage persistant en haut du storefront.
+- [ ] **Partage Facilité du Lien Boutique :**
+  * Bouton "Partager ma boutique" dans les réglages de l'app mobile (génération de QR Code direct et lien d'accès).
 
 ---
 
-## 📌 Règles de Travail pour les Futures Sessions d'IA
-1. Toujours consulter ce fichier `passation.md` avant de démarrer toute intervention.
-2. Travailler sur des branches au format `feat/...`, `style/...` ou `fix/...`. Ne jamais committer sur `main`.
-3. Chaque problème ou fonctionnalité doit avoir sa propre branche dédiée.
-4. Mettre à jour ce document à la fin de chaque session.
+## 🔒 Règles pour la Prochaine Session
+1. **Toujours tester avant de push :** Exécuter `npx tsc --noEmit` et `npx expo export --platform android` (ou web) avant tout commit.
+2. **Ne jamais hardcoder de couleurs :** Utiliser systématiquement les tokens de [`src/constants/theme.ts`](file:///home/menma/Shop%20Project/menma-store-app/src/constants/theme.ts).
+3. **Conserver l'architecture en hooks séparés :** Aucun appel API direct ou state complexe au sein des composants visuels d'écran.
