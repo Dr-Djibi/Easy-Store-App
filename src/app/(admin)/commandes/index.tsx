@@ -6,6 +6,17 @@ import { formatPrice } from '@/lib/utils';
 import { COLORS, SPACING, RADII, FONT_SIZE } from '@/constants/theme';
 import type { Order } from '@/types';
 
+function formatDate(dateStr: string) {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} à ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return dateStr;
+  }
+}
+
 export default function OrdersScreen() {
   const { orders, loading, refresh, changeStatus } = useOrders();
 
@@ -47,7 +58,7 @@ export default function OrdersScreen() {
             </View>
 
             <Text style={styles.date}>
-              {new Date(item.created_at).toLocaleString('fr-FR')}
+              {formatDate(item.created_at)}
             </Text>
           </TouchableOpacity>
         )}

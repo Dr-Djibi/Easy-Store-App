@@ -4,6 +4,7 @@ import { Package, ShoppingBag, DollarSign } from 'lucide-react-native';
 import { useProducts } from '@/hooks/useProducts';
 import { useOrders } from '@/hooks/useOrders';
 import { StatCard } from '@/components/ui';
+import { formatPrice } from '@/lib/utils';
 import { COLORS, SPACING, FONT_SIZE } from '@/constants/theme';
 
 export default function DashboardScreen() {
@@ -48,7 +49,7 @@ export default function DashboardScreen() {
         />
         <StatCard
           icon={<DollarSign color={COLORS.SUCCESS} size={24} />}
-          value={`${Math.round(totalRevenue).toLocaleString('fr-FR')} GNF`}
+          value={formatPrice(totalRevenue)}
           label="Chiffre d'affaires estimé"
           style={styles.fullWidth}
         />

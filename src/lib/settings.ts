@@ -23,13 +23,14 @@ export async function getAllSettings(): Promise<Partial<StoreSettings>> {
   return map;
 }
 
-export async function updateSetting(key: string, value: string): Promise<boolean> {
+export async function updateSetting(key: string, value: string): Promise<{ success: boolean; error?: string }> {
   const { client } = useSupabaseStore.getState();
-  if (!client) return false;
+  if (!client) return { success: false, error: 'Supabase non configuré' };
 
   const { error } = await client
     .from('settings')
-    .upsert({ key, value });
+    .upsert({ key, value }, { onConflict: 'key' });
 
-  return !error;
+  if (error) return { success: false, error: error.message };
+  return { success: true };
 }

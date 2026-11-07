@@ -10,7 +10,7 @@ import { COLORS, SPACING, RADII, FONT_SIZE } from '@/constants/theme';
 export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuthStore();
-  const { clearConfig } = useSupabaseStore();
+  const { client, clearConfig } = useSupabaseStore();
   const { form, setForm, loading, saving, load, save } = useSettings();
 
   useEffect(() => {
@@ -23,9 +23,17 @@ export default function SettingsScreen() {
       {
         text: 'Déconnexion',
         style: 'destructive',
-        onPress: () => {
-          signOut();
-          router.replace('/login');
+        onPress: async () => {
+          try {
+            if (client) {
+              await client.auth.signOut();
+            }
+          } catch (e) {
+            console.error('Erreur signOut:', e);
+          } finally {
+            signOut();
+            router.replace('/login');
+          }
         },
       },
     ]);

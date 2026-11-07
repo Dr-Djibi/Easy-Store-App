@@ -40,16 +40,20 @@ export function useSettings() {
   const save = useCallback(async () => {
     setSaving(true);
     try {
-      await Promise.all([
+      const results = await Promise.all([
         updateSetting('STORE_NAME', form.storeName),
         updateSetting('WHATSAPP_NUMBER', form.whatsapp),
         updateSetting('STORE_PHONE', form.phone),
         updateSetting('STORE_BANNER_TITLE', form.bannerTitle),
         updateSetting('STORE_BANNER_SUBTITLE', form.bannerSubtitle),
       ]);
+      const failed = results.find((r) => !r.success);
+      if (failed) {
+        throw new Error(failed.error || 'Erreur lors de la sauvegarde.');
+      }
       Alert.alert('Succès 🎉', 'Paramètres de la boutique mis à jour !');
-    } catch {
-      Alert.alert('Erreur', 'Impossible de sauvegarder les paramètres.');
+    } catch (err: unknown) {
+      Alert.alert('Erreur', err instanceof Error ? err.message : 'Impossible de sauvegarder les paramètres.');
     } finally {
       setSaving(false);
     }

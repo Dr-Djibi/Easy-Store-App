@@ -5,10 +5,10 @@ import { useAuthStore } from '../store/authStore';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function Index() {
-  const { isConfigured } = useSupabaseStore();
+  const { isConfigured, isReady } = useSupabaseStore();
   const { session, isLoading } = useAuthStore();
 
-  if (isLoading && isConfigured) {
+  if (!isReady || (isLoading && isConfigured)) {
     return (
       <View style={{ flex: 1, backgroundColor: '#060501', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#facc15" />
