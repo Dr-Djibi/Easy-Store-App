@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Menma Store App",
-    "slug": "menma-store-app",
+    "name": "EStore",
+    "slug": "estore-admin",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "menmastore",
+    "scheme": "estore",
     "userInterfaceStyle": "dark",
     "splash": {
       "resizeMode": "contain",
@@ -12,10 +12,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.menmastore.admin"
+      "bundleIdentifier": "com.estore.admin"
     },
     "android": {
-      "package": "com.menmastore.admin",
+      "package": "com.estore.admin",
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#060501"
@@ -26,7 +26,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "L'application a besoin d'accéder à vos photos pour ajouter des visuels à vos produits."
+          "photosPermission": "EStore a besoin d'accéder à vos photos pour ajouter des visuels à vos produits."
         }
       ]
     ]
