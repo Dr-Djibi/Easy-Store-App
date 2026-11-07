@@ -8,7 +8,7 @@ import { useSupabaseStore } from '../../../store/supabaseStore';
 export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuthStore();
-  const { clearConfig } = useSupabaseStore();
+  const { client } = useSupabaseStore();
 
   const [storeName, setStoreName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
@@ -32,15 +32,22 @@ export default function SettingsScreen() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await updateSetting('STORE_NAME', storeName);
-      await updateSetting('WHATSAPP_NUMBER', whatsapp);
-      await updateSetting('STORE_PHONE', phone);
-      await updateSetting('STORE_BANNER_TITLE', bannerTitle);
-      await updateSetting('STORE_BANNER_SUBTITLE', bannerSubtitle);
+      const results = await Promise.all([
+        updateSetting('STORE_NAME', storeName),
+        updateSetting('WHATSAPP_NUMBER', whatsapp),
+        updateSetting('STORE_PHONE', phone),
+        updateSetting('STORE_BANNER_TITLE', bannerTitle),
+        updateSetting('STORE_BANNER_SUBTITLE', bannerSubtitle),
+      ]);
+
+      const failed = results.find((r) => !r.success);
+      if (failed) {
+        throw new Error(failed.error || 'Erreur lors de la sauvegarde.');
+      }
 
       Alert.alert('Succès 🎉', 'Paramètres de la boutique mis à jour !');
-    } catch {
-      Alert.alert('Erreur', 'Impossible de sauvegarder les paramètres.');
+    } catch (err: unknown) {
+      Alert.alert('Erreur', err instanceof Error ? err.message : 'Impossible de sauvegarder les paramètres.');
     } finally {
       setLoading(false);
     }
@@ -53,8 +60,16 @@ export default function SettingsScreen() {
         text: 'Déconnexion',
         style: 'destructive',
         onPress: async () => {
-          signOut();
-          router.replace('/login');
+          try {
+            if (client) {
+              await client.auth.signOut();
+            }
+          } catch (e) {
+            console.error('Erreur signOut:', e);
+          } finally {
+            signOut();
+            router.replace('/login');
+          }
         },
       },
     ]);
