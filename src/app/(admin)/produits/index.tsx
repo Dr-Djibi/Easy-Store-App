@@ -1,48 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getProducts, toggleProductActive, deleteProduct } from '../../../lib/products';
-import { formatPrice } from '../../../lib/utils';
-import type { Product } from '../../../types';
 import { Plus, Eye, EyeOff, Trash2, Edit } from 'lucide-react-native';
+import { useProducts } from '@/hooks/useProducts';
+import { EmptyState } from '@/components/ui';
+import { formatPrice } from '@/lib/utils';
+import { COLORS, SPACING, RADII, FONT_SIZE } from '@/constants/theme';
+import type { Product } from '@/types';
 
 export default function ProductsListScreen() {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      const data = await getProducts();
-      setProducts(data);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { products, loading, refresh, toggleActive, remove } = useProducts();
 
   useEffect(() => {
-    load();
+    refresh();
   }, []);
-
-  const handleToggle = async (id: string, current: boolean) => {
-    await toggleProductActive(id, current);
-    load();
-  };
-
-  const handleDelete = (id: string, nom: string) => {
-    Alert.alert('Supprimer', `Voulez-vous vraiment supprimer "${nom}" ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteProduct(id);
-          load();
-        },
-      },
-    ]);
-  };
 
   return (
     <View style={styles.container}>
@@ -52,7 +24,7 @@ export default function ProductsListScreen() {
           onPress={() => router.push('/(admin)/produits/nouveau')}
           style={styles.addBtn}
         >
-          <Plus size={18} color="#060501" />
+          <Plus size={18} color={COLORS.BG_PRIMARY} />
           <Text style={styles.addBtnText}>Nouveau</Text>
         </TouchableOpacity>
       </View>
@@ -60,9 +32,14 @@ export default function ProductsListScreen() {
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor="#facc15" />}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={COLORS.ACCENT} />
+        }
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
+        ListEmptyComponent={
+          !loading ? <EmptyState message="Aucun produit enregistré." icon="📦" /> : null
+        }
+        renderItem={({ item }: { item: Product }) => (
           <View style={styles.card}>
             <View style={styles.cardInfo}>
               <View style={styles.titleRow}>
@@ -71,7 +48,6 @@ export default function ProductsListScreen() {
                   <Text style={styles.badgeText}>{item.actif ? 'Actif' : 'Inactif'}</Text>
                 </View>
               </View>
-
               <Text style={styles.productPrice}>{formatPrice(item.prix)}</Text>
               <Text style={styles.blocksCount}>
                 {(item.content_blocks || []).length} bloc(s) de vente personnalisé(s)
@@ -79,25 +55,23 @@ export default function ProductsListScreen() {
             </View>
 
             <View style={styles.cardActions}>
-              <TouchableOpacity
-                onPress={() => handleToggle(item.id, item.actif)}
-                style={styles.actionBtn}
-              >
-                {item.actif ? <Eye size={18} color="#4ade80" /> : <EyeOff size={18} color="#94a3b8" />}
+              <TouchableOpacity onPress={() => toggleActive(item.id, item.actif)} style={styles.actionBtn}>
+                {item.actif
+                  ? <Eye size={18} color={COLORS.SUCCESS} />
+                  : <EyeOff size={18} color="#94a3b8" />
+                }
               </TouchableOpacity>
-
               <TouchableOpacity
                 onPress={() => router.push(`/(admin)/produits/${item.id}`)}
                 style={styles.actionBtn}
               >
-                <Edit size={18} color="#38bdf8" />
+                <Edit size={18} color={COLORS.INFO} />
               </TouchableOpacity>
-
               <TouchableOpacity
-                onPress={() => handleDelete(item.id, item.nom)}
+                onPress={() => remove(item.id, item.nom)}
                 style={[styles.actionBtn, styles.deleteBtn]}
               >
-                <Trash2 size={18} color="#ef4444" />
+                <Trash2 size={18} color={COLORS.DANGER} />
               </TouchableOpacity>
             </View>
           </View>
@@ -110,44 +84,44 @@ export default function ProductsListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#060501',
-    padding: 20,
+    backgroundColor: COLORS.BG_PRIMARY,
+    padding: SPACING.xl,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: SPACING.xl,
   },
   title: {
-    fontSize: 22,
+    fontSize: FONT_SIZE.xxl,
     fontWeight: '900',
-    color: '#fef9e7',
+    color: COLORS.TEXT_PRIMARY,
   },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#facc15',
+    gap: SPACING.sm - 2,
+    backgroundColor: COLORS.ACCENT,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: SPACING.sm + 2,
+    borderRadius: RADII.xl,
   },
   addBtnText: {
-    color: '#060501',
+    color: COLORS.BG_PRIMARY,
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: FONT_SIZE.sm,
   },
   list: {
-    gap: 12,
-    paddingBottom: 24,
+    gap: SPACING.md,
+    paddingBottom: SPACING.xxl,
   },
   card: {
-    backgroundColor: '#100e04',
+    backgroundColor: COLORS.BG_CARD,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 16,
-    padding: 16,
+    borderColor: COLORS.BORDER,
+    borderRadius: RADII.xxl,
+    padding: SPACING.lg,
   },
   cardInfo: {
     marginBottom: 14,
@@ -156,55 +130,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: SPACING.sm,
   },
   productName: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.md,
     fontWeight: 'bold',
-    color: '#fef9e7',
+    color: COLORS.TEXT_PRIMARY,
     flex: 1,
+    marginRight: SPACING.sm,
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginLeft: 8,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADII.sm,
   },
   badgeActive: {
-    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+    backgroundColor: COLORS.SUCCESS_BG,
   },
   badgeInactive: {
     backgroundColor: 'rgba(148, 163, 184, 0.15)',
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: FONT_SIZE.xs,
     fontWeight: 'bold',
-    color: '#fef9e7',
+    color: COLORS.TEXT_PRIMARY,
   },
   productPrice: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#facc15',
-    marginBottom: 4,
+    fontSize: FONT_SIZE.sm,
+    fontWeight: 'bold',
+    color: COLORS.ACCENT,
+    marginBottom: SPACING.xs,
   },
   blocksCount: {
-    fontSize: 12,
-    color: 'rgba(254, 249, 231, 0.65)',
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.TEXT_MUTED,
   },
   cardActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingTop: 12,
+    gap: SPACING.sm,
   },
   actionBtn: {
-    padding: 8,
-    backgroundColor: '#18160a',
-    borderRadius: 8,
+    padding: SPACING.sm,
+    borderRadius: RADII.md,
+    backgroundColor: COLORS.BG_INPUT,
   },
   deleteBtn: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: COLORS.DANGER_BG_LIGHT,
   },
 });

@@ -20,14 +20,21 @@
     },
     "android": {
       "package": "com.easystore.admin",
-      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#060501"
       }
     },
+    "experiments": {
+      "typedRoutes": true
+    },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "root": "./src/app"
+        }
+      ],
       [
         "expo-image-picker",
         {

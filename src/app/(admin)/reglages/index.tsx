@@ -1,59 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getAllSettings, updateSetting } from '../../../lib/settings';
-import { useAuthStore } from '../../../store/authStore';
-import { useSupabaseStore } from '../../../store/supabaseStore';
+import { useSettings } from '@/hooks/useSettings';
+import { FormField, LoadingScreen } from '@/components/ui';
+import { useAuthStore } from '@/store/authStore';
+import { useSupabaseStore } from '@/store/supabaseStore';
+import { COLORS, SPACING, RADII, FONT_SIZE } from '@/constants/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuthStore();
-  const { client } = useSupabaseStore();
-
-  const [storeName, setStoreName] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [phone, setPhone] = useState('');
-  const [bannerTitle, setBannerTitle] = useState('');
-  const [bannerSubtitle, setBannerSubtitle] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
+  const { client, clearConfig } = useSupabaseStore();
+  const { form, setForm, loading, saving, load, save } = useSettings();
 
   useEffect(() => {
-    getAllSettings().then((s) => {
-      setStoreName(s.STORE_NAME || '');
-      setWhatsapp(s.WHATSAPP_NUMBER || '');
-      setPhone(s.STORE_PHONE || '');
-      setBannerTitle(s.STORE_BANNER_TITLE || '');
-      setBannerSubtitle(s.STORE_BANNER_SUBTITLE || '');
-      setFetching(false);
-    });
+    load();
   }, []);
 
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      const results = await Promise.all([
-        updateSetting('STORE_NAME', storeName),
-        updateSetting('WHATSAPP_NUMBER', whatsapp),
-        updateSetting('STORE_PHONE', phone),
-        updateSetting('STORE_BANNER_TITLE', bannerTitle),
-        updateSetting('STORE_BANNER_SUBTITLE', bannerSubtitle),
-      ]);
-
-      const failed = results.find((r) => !r.success);
-      if (failed) {
-        throw new Error(failed.error || 'Erreur lors de la sauvegarde.');
-      }
-
-      Alert.alert('Succès 🎉', 'Paramètres de la boutique mis à jour !');
-    } catch (err: unknown) {
-      Alert.alert('Erreur', err instanceof Error ? err.message : 'Impossible de sauvegarder les paramètres.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
+  const handleLogout = () => {
     Alert.alert('Déconnexion', 'Voulez-vous vous déconnecter ?', [
       { text: 'Annuler', style: 'cancel' },
       {
@@ -75,78 +39,55 @@ export default function SettingsScreen() {
     ]);
   };
 
-  if (fetching) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#060501', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#facc15" />
-      </View>
-    );
-  }
+  if (loading) return <LoadingScreen />;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Paramètres Boutique</Text>
 
       <View style={styles.card}>
-        <View style={styles.field}>
-          <Text style={styles.label}>Nom de la Boutique</Text>
-          <TextInput
-            value={storeName}
-            onChangeText={setStoreName}
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Numéro WhatsApp Officiel (avec indicatif)</Text>
-          <TextInput
-            placeholder="Ex: 224600000000"
-            placeholderTextColor="rgba(254, 249, 231, 0.4)"
-            value={whatsapp}
-            onChangeText={setWhatsapp}
-            keyboardType="phone-pad"
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Téléphone d'Appel</Text>
-          <TextInput
-            placeholder="+224 600 00 00 00"
-            placeholderTextColor="rgba(254, 249, 231, 0.4)"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Titre de la Bannière d'Accueil</Text>
-          <TextInput
-            value={bannerTitle}
-            onChangeText={setBannerTitle}
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Sous-Titre de la Bannière</Text>
-          <TextInput
-            value={bannerSubtitle}
-            onChangeText={setBannerSubtitle}
-            multiline
-            numberOfLines={2}
-            style={[styles.input, styles.textArea]}
-          />
-        </View>
+        <FormField
+          label="Nom de la Boutique"
+          value={form.storeName}
+          onChangeText={(v) => setForm((f) => ({ ...f, storeName: v }))}
+        />
+        <FormField
+          label="Numéro WhatsApp Officiel (avec indicatif)"
+          value={form.whatsapp}
+          onChangeText={(v) => setForm((f) => ({ ...f, whatsapp: v }))}
+          placeholder="Ex: 224600000000"
+          keyboardType="phone-pad"
+        />
+        <FormField
+          label="Téléphone d'Appel"
+          value={form.phone}
+          onChangeText={(v) => setForm((f) => ({ ...f, phone: v }))}
+          placeholder="+224 600 00 00 00"
+          keyboardType="phone-pad"
+        />
+        <FormField
+          label="Titre de la Bannière d'Accueil"
+          value={form.bannerTitle}
+          onChangeText={(v) => setForm((f) => ({ ...f, bannerTitle: v }))}
+        />
+        <FormField
+          label="Sous-Titre de la Bannière"
+          value={form.bannerSubtitle}
+          onChangeText={(v) => setForm((f) => ({ ...f, bannerSubtitle: v }))}
+          multiline
+          numberOfLines={2}
+          style={styles.textArea}
+        />
 
         <TouchableOpacity
-          onPress={handleSave}
-          disabled={loading}
-          style={[styles.saveBtn, loading && styles.disabled]}
+          onPress={save}
+          disabled={saving}
+          style={[styles.saveBtn, saving && styles.disabled]}
         >
-          {loading ? <ActivityIndicator color="#060501" /> : <Text style={styles.saveBtnText}>Enregistrer</Text>}
+          {saving
+            ? <ActivityIndicator color={COLORS.BG_PRIMARY} />
+            : <Text style={styles.saveBtnText}>Enregistrer</Text>
+          }
         </TouchableOpacity>
       </View>
 
@@ -165,90 +106,71 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: '#060501',
+    padding: SPACING.xl,
+    backgroundColor: COLORS.BG_PRIMARY,
     flexGrow: 1,
   },
   title: {
-    fontSize: 22,
+    fontSize: FONT_SIZE.xxl,
     fontWeight: '900',
-    color: '#fef9e7',
-    marginBottom: 20,
+    color: COLORS.TEXT_PRIMARY,
+    marginBottom: SPACING.xl,
   },
   card: {
-    backgroundColor: '#100e04',
+    backgroundColor: COLORS.BG_CARD,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-  },
-  field: {
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fef9e7',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#18160a',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 12,
-    color: '#fef9e7',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
+    borderColor: COLORS.BORDER,
+    borderRadius: RADII.xxl,
+    padding: SPACING.lg,
+    marginBottom: SPACING.xxl,
   },
   textArea: {
     height: 60,
     textAlignVertical: 'top',
   },
   saveBtn: {
-    backgroundColor: '#facc15',
+    backgroundColor: COLORS.ACCENT,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: RADII.xl,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   disabled: {
     opacity: 0.5,
   },
   saveBtnText: {
-    color: '#060501',
+    color: COLORS.BG_PRIMARY,
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: FONT_SIZE.base,
   },
   dangerZone: {
-    gap: 12,
-    marginBottom: 30,
+    gap: SPACING.md,
+    marginBottom: SPACING.xxxl,
   },
   changeKeyBtn: {
-    backgroundColor: '#18160a',
+    backgroundColor: COLORS.BG_INPUT,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: COLORS.BORDER,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: RADII.xl,
     alignItems: 'center',
   },
   changeKeyText: {
-    color: '#facc15',
+    color: COLORS.ACCENT,
     fontWeight: '600',
-    fontSize: 13,
+    fontSize: FONT_SIZE.sm,
   },
   logoutBtn: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: COLORS.DANGER_BG_LIGHT,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: COLORS.DANGER_BORDER,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: RADII.xl,
     alignItems: 'center',
   },
   logoutText: {
-    color: '#ef4444',
+    color: COLORS.DANGER,
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: FONT_SIZE.sm,
   },
 });
