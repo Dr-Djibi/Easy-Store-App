@@ -55,7 +55,7 @@ export default function LoginScreen() {
         <View style={styles.field}>
           <Text style={styles.label}>Adresse Email</Text>
           <TextInput
-            placeholder="admin@menmashop.com"
+            placeholder="admin@easystore.com"
             placeholderTextColor="rgba(254, 249, 231, 0.4)"
             value={email}
             onChangeText={setEmail}

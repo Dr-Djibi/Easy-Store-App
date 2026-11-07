@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "EStore",
-    "slug": "estore-admin",
+    "name": "Easy Store",
+    "slug": "easy-store-admin",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "estore",
+    "scheme": "easystore",
     "userInterfaceStyle": "dark",
     "splash": {
       "resizeMode": "contain",
@@ -12,10 +12,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.estore.admin"
+      "bundleIdentifier": "com.easystore.admin"
     },
     "android": {
-      "package": "com.estore.admin",
+      "package": "com.easystore.admin",
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#060501"
@@ -26,7 +26,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "EStore a besoin d'accéder à vos photos pour ajouter des visuels à vos produits."
+          "photosPermission": "Easy Store a besoin d'accéder à vos photos pour ajouter des visuels à vos produits."
         }
       ]
     ]
