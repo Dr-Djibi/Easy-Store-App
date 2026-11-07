@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { ArrowUp, ArrowDown, Trash2 } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
+import { ArrowUp, ArrowDown, Trash2, ImagePlus } from 'lucide-react-native';
+import { pickAndUploadImage } from '../../lib/storage';
 import type { ContentBlock } from '../../types';
 
 export default function BlockEditor({
@@ -10,6 +11,8 @@ export default function BlockEditor({
   blocks: ContentBlock[];
   onChange: (blocks: ContentBlock[]) => void;
 }) {
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
   const addBlock = () => {
     const newBlock: ContentBlock = {
       id: Math.random().toString(36).substring(2, 9),
@@ -25,6 +28,20 @@ export default function BlockEditor({
     const next = [...blocks];
     next[index] = { ...next[index], ...patch };
     onChange(next);
+  };
+
+  const handlePickBlockImage = async (index: number) => {
+    setUploadingIdx(index);
+    try {
+      const res = await pickAndUploadImage();
+      if (res.success && res.url) {
+        updateBlock(index, { imageUrl: res.url });
+      } else if (res.error) {
+        Alert.alert('Erreur Upload', res.error);
+      }
+    } finally {
+      setUploadingIdx(null);
+    }
   };
 
   const removeBlock = (index: number) => {
@@ -91,13 +108,36 @@ export default function BlockEditor({
             numberOfLines={4}
           />
 
-          <TextInput
-            placeholder="URL de l'image d'illustration"
-            placeholderTextColor="rgba(254, 249, 231, 0.4)"
-            value={block.imageUrl || ''}
-            onChangeText={(txt) => updateBlock(idx, { imageUrl: txt })}
-            style={styles.input}
-          />
+          <View style={styles.imagePickerRow}>
+            <TouchableOpacity
+              onPress={() => handlePickBlockImage(idx)}
+              disabled={uploadingIdx === idx}
+              style={styles.pickBtn}
+            >
+              {uploadingIdx === idx ? (
+                <ActivityIndicator size="small" color="#facc15" />
+              ) : (
+                <>
+                  <ImagePlus size={15} color="#facc15" />
+                  <Text style={styles.pickBtnText}>Photo</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TextInput
+              placeholder="Ou URL de l'image"
+              placeholderTextColor="rgba(254, 249, 231, 0.4)"
+              value={block.imageUrl || ''}
+              onChangeText={(txt) => updateBlock(idx, { imageUrl: txt })}
+              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+            />
+          </View>
+
+          {block.imageUrl ? (
+            <View style={styles.previewContainer}>
+              <Image source={{ uri: block.imageUrl }} style={styles.imagePreview} />
+            </View>
+          ) : null}
         </View>
       ))}
 
@@ -168,6 +208,41 @@ const styles = StyleSheet.create({
   textArea: {
     height: 80,
     textAlignVertical: 'top',
+  },
+  imagePickerRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  pickBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#100e04',
+    borderWidth: 1,
+    borderColor: 'rgba(250, 204, 21, 0.3)',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  pickBtnText: {
+    color: '#facc15',
+    fontWeight: 'bold',
+    fontSize: 11,
+  },
+  previewContainer: {
+    marginTop: 8,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    width: 60,
+    height: 60,
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 9,
   },
   addBtn: {
     borderWidth: 1,
