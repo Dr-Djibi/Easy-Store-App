@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { createProduct } from '../../../lib/products';
 import { generateSlug } from '../../../lib/utils';
+import { pickAndUploadImage } from '../../../lib/storage';
 import BlockEditor from '../../../components/product/BlockEditor';
 import type { ContentBlock } from '../../../types';
+import { ImagePlus } from 'lucide-react-native';
 
 export default function NewProductScreen() {
   const router = useRouter();
@@ -16,6 +18,21 @@ export default function NewProductScreen() {
   const [imageUrl, setImageUrl] = useState('');
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handlePickImage = async () => {
+    setUploadingImage(true);
+    try {
+      const res = await pickAndUploadImage();
+      if (res.success && res.url) {
+        setImageUrl(res.url);
+      } else if (res.error) {
+        Alert.alert('Erreur Upload', res.error);
+      }
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!nom.trim() || !prix.trim()) {
@@ -106,14 +123,35 @@ export default function NewProductScreen() {
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Image Principale (URL)</Text>
-        <TextInput
-          placeholder="https://..."
-          placeholderTextColor="rgba(254, 249, 231, 0.4)"
-          value={imageUrl}
-          onChangeText={setImageUrl}
-          style={styles.input}
-        />
+        <Text style={styles.label}>Image Principale</Text>
+        <View style={styles.imagePickerRow}>
+          <TouchableOpacity
+            onPress={handlePickImage}
+            disabled={uploadingImage}
+            style={styles.pickBtn}
+          >
+            {uploadingImage ? (
+              <ActivityIndicator size="small" color="#facc15" />
+            ) : (
+              <>
+                <ImagePlus size={16} color="#facc15" />
+                <Text style={styles.pickBtnText}>Choisir Photo</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <TextInput
+            placeholder="Ou coller une URL https://..."
+            placeholderTextColor="rgba(254, 249, 231, 0.4)"
+            value={imageUrl}
+            onChangeText={setImageUrl}
+            style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          />
+        </View>
+        {imageUrl.trim() ? (
+          <View style={styles.previewContainer}>
+            <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
+          </View>
+        ) : null}
       </View>
 
       {/* Module Blocs Persuasion */}
@@ -168,6 +206,41 @@ const styles = StyleSheet.create({
   textArea: {
     height: 70,
     textAlignVertical: 'top',
+  },
+  imagePickerRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  pickBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#18160a',
+    borderWidth: 1,
+    borderColor: 'rgba(250, 204, 21, 0.3)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  pickBtnText: {
+    color: '#facc15',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  previewContainer: {
+    marginTop: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    width: 80,
+    height: 80,
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 11,
   },
   saveBtn: {
     backgroundColor: '#facc15',
