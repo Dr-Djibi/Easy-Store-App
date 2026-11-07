@@ -1,6 +1,6 @@
-# 📱 Menma Store App (Admin Mobile)
+# 📱 Easy Store App (Admin Mobile)
 
-Application mobile développée en React Native (Expo) servant de télécommande / panneau d'administration pour la boutique Menma Store.
+Application mobile développée en React Native (Expo) servant de télécommande / panneau d'administration pour la boutique Easy Store.
 
 ## 🚀 Caractéristiques
 - **Configuration dynamique de Supabase** : Saisissez vos clés Supabase pour connecter l'application à n'importe quelle instance.
