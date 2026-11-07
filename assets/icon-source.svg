@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#121008"/>
+      <stop offset="40%" stop-color="#0a0802"/>
+      <stop offset="100%" stop-color="#040301"/>
+    </linearGradient>
+
+    <radialGradient id="goldGlow" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#facc15" stop-opacity="0.22"/>
+      <stop offset="50%" stop-color="#eab308" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Gold Luxury Gradient for Bag -->
+    <linearGradient id="goldPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="30%" stop-color="#facc15"/>
+      <stop offset="70%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+
+    <!-- Metallic Handle Gradient -->
+    <linearGradient id="goldHandle" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef9c3"/>
+      <stop offset="50%" stop-color="#facc15"/>
+      <stop offset="100%" stop-color="#a16207"/>
+    </linearGradient>
+
+    <!-- Inner Shadow / Depth on Bag -->
+    <linearGradient id="bagInnerDepth" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#713f12" stop-opacity="0.35"/>
+    </linearGradient>
+
+    <!-- Border Glow -->
+    <linearGradient id="borderGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="#facc15" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ca8a04" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Filter -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#000000" flood-opacity="0.8"/>
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#ca8a04" flood-opacity="0.25"/>
+    </filter>
+
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bgGradient)"/>
+  <rect width="1024" height="1024" rx="224" fill="url(#goldGlow)"/>
+
+  <!-- Subtle App Icon Squircle Border -->
+  <rect x="2" y="2" width="1020" height="1020" rx="222" fill="none" stroke="url(#borderGlow)" stroke-width="4"/>
+
+  <!-- Main Bag Composition -->
+  <g filter="url(#dropShadow)">
+    
+    <!-- Bag Handle (Arc) -->
+    <path d="M 392 370 C 392 245, 632 245, 632 370" 
+          fill="none" 
+          stroke="url(#goldHandle)" 
+          stroke-width="36" 
+          stroke-linecap="round"/>
+
+    <!-- Bag Body -->
+    <path d="M 276 370 L 748 370 C 768 370, 782 388, 778 408 L 734 768 C 730 796, 706 816, 678 816 L 346 816 C 318 816, 294 796, 290 768 L 246 408 C 242 388, 256 370, 276 370 Z" 
+          fill="url(#goldPrimary)"/>
+
+    <!-- Inner Gradient Depth on Bag -->
+    <path d="M 276 370 L 748 370 C 768 370, 782 388, 778 408 L 734 768 C 730 796, 706 816, 678 816 L 346 816 C 318 816, 294 796, 290 768 L 246 408 C 242 388, 256 370, 276 370 Z" 
+          fill="url(#bagInnerDepth)"/>
+
+    <!-- Geometric "E" monogram cut / overlay on bag -->
+    <g transform="translate(512, 595)">
+      <!-- Central Stylized "E" in obsidian black & gold accent -->
+      <path d="M -90 -115 L 75 -115 C 88 -115, 96 -103, 92 -91 C 88 -80, 78 -73, 65 -73 L -35 -73 L -35 -21 L 52 -21 C 65 -21, 73 -9, 69 3 C 65 14, 55 21, 42 21 L -35 21 L -35 73 L 75 73 C 88 73, 96 85, 92 97 C 88 108, 78 115, 65 115 L -90 115 C -105 115, -115 105, -115 90 L -115 -90 C -115 -105, -105 -115, -90 -115 Z"
+            fill="#090803"
+            filter="url(#softGlow)"/>
+
+      <!-- Diamond / Sparkle element on top-right of E -->
+      <path d="M 95 -60 L 115 -80 L 135 -60 L 115 -40 Z" fill="#fef08a"/>
+    </g>
+
+    <!-- Subtle Golden Fold Line at top -->
+    <line x1="262" y1="410" x2="762" y2="410" stroke="#fef9c3" stroke-width="4" stroke-opacity="0.6"/>
+  </g>
+</svg>

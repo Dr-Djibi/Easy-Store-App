@@ -4,20 +4,25 @@
     "slug": "easy-store-admin",
     "version": "1.0.0",
     "orientation": "portrait",
+    "owner": "dr-djibi",
     "scheme": "easystore",
     "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#060501"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.easystore.admin"
+      "bundleIdentifier": "com.easystore.admin",
+      "icon": "./assets/icon.png"
     },
     "android": {
       "package": "com.easystore.admin",
       "versionCode": 1,
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#060501"
       }
     },
