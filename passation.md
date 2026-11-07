@@ -5,7 +5,7 @@ Il récapitule l'historique complet, l'état exact du projet, ce qui a été ach
 
 ---
 
-## 📅 Dernière Mise à Jour : 7 Novembre 2026 (00:46 UTC)
+## 📅 Dernière Mise à Jour : 7 Novembre 2026 (02:10 UTC)
 
 ---
 
@@ -16,12 +16,29 @@ Créer un écosystème e-commerce auto-hébergé (**Easy-Store**) sans dépendan
 
 ---
 
-## 🚀 Référentiels Git & Branches Actives
+## 🚀 Référentiels Git & Branches Dédiées par Problème
 
-| Projet | Dépôt GitHub | Branche par défaut | Branche en cours |
-|---|---|---|---|
-| **Web Storefront** | [Dr-Djibi/Easy-Store](https://github.com/Dr-Djibi/Easy-Store) | `main` | `feat/impeccable-ui-ux` |
-| **Mobile Admin** | [Dr-Djibi/Easy-Store-App](https://github.com/Dr-Djibi/Easy-Store-App) | `main` | `feat/impeccable-ui-ux` |
+### Storefront Web (`Dr-Djibi/Easy-Store`)
+| Branche | Statut | Description |
+|---|---|---|
+| `main` | Stable | Branche de production |
+| `feat/impeccable-ui-ux` | Base | Branche de fonctionnalités UX / UI |
+| `fix/postcss-tailwind-config` | ✅ Prêt | Ajout de `postcss.config.mjs` pour la compilation Tailwind CSS v4 |
+| `fix/supabase-resilience` | ✅ Prêt | Sécurisation des clients Supabase avec placeholders (évite les crashs de build) |
+| `fix/product-page-errors` | ✅ Prêt | Gestion try-catch et `.maybeSingle()` sur `/produit/[slug]` |
+| `fix/settings-and-utils-robustness` | ✅ Prêt | Sécurisation templating WhatsApp, parsing `ORDER_FIELDS` et UUID commande |
+| `feat/out-of-stock-handling` | ✅ Prêt | Gestion dynamique du stock épuisé dans `OrderTunnel` avec CTA réassort |
+
+### Application Mobile Admin (`Dr-Djibi/Easy-Store-App`)
+| Branche | Statut | Description |
+|---|---|---|
+| `main` | Stable | Branche de production |
+| `feat/apk-eas-workflow` | Base | Workflow CI/CD GitHub Actions & configuration EAS APK |
+| `fix/eas-android-package-id` | ✅ Prêt | Ajout de `package: com.menmastore.admin` dans `app.json` requis par EAS Build |
+| `fix/startup-race-condition` | ✅ Prêt | Ajout du drapeau `isReady` dans `useSupabaseStore` (fin des faux redirects `/config`) |
+| `fix/admin-dashboard-styles` | ✅ Prêt | Remplacement de `fontWeight: 'black'` par `'900'`, dates déterministes et badges |
+| `fix/admin-settings-and-logout` | ✅ Prêt | Appel explicite de `client.auth.signOut()`, retour d'erreur précis et pré-remplissage |
+| `feat/native-image-upload` | ✅ Prêt | Intégration de `expo-image-picker` pour l'upload direct vers Supabase Storage |
 
 ---
 
@@ -38,7 +55,7 @@ Créer un écosystème e-commerce auto-hébergé (**Easy-Store**) sans dépendan
 - [x] Configuration des buckets Supabase Storage (`products` et `assets`) avec leurs politiques d'accès.
 
 ### 2. Storefront Web (`menma-store` -> `Easy-Store`)
-- [x] Architecture Next.js 15 App Router avec TailwindCSS et variables de thèmes CSS.
+- [x] Architecture Next.js 15 App Router avec TailwindCSS v4 et variables de thèmes CSS.
 - [x] **En-têtes de sécurité HTTP** configurés dans [`src/middleware.ts`](file:///home/menma/Shop%20Project/menma-store/src/middleware.ts).
 - [x] **Composants d'accueil** : `HeroBanner`, `ProductGrid`, `ProductCard`, `ReassuranceBar`.
 - [x] **Page Produit `/produit/[slug]`** :
@@ -52,15 +69,20 @@ Créer un écosystème e-commerce auto-hébergé (**Easy-Store**) sans dépendan
 
 ### 3. Application Mobile Admin (`menma-store-app` -> `Easy-Store-App`)
 - [x] Structure Expo Router avec thème sombre soigné.
-- [x] Écran de liaison dynamique **`config.tsx`** : saisie de l'URL Supabase, Anon Key et Service Key avec test de connexion en temps réel.
+- [x] Écran de liaison dynamique **`config.tsx`** : saisie et test en temps réel.
 - [x] Écran de connexion admin **`login.tsx`** (Supabase Auth).
 - [x] Navigation par onglets `(admin)` :
   - **Tableau de bord** : Statistiques réelles (Total produits, commandes, chiffre d'affaires).
   - **Gestion des Produits** : Liste avec toggle visibilité, suppression et redirection édition.
-  - **Formulaire Produit (`nouveau.tsx` et `[id].tsx`)** : Titre, prix, stock, description, image et intégration du `BlockEditor`.
-  - **Composant `BlockEditor.tsx`** : Ajout illimité de blocs avec boutons pour monter, descendre et supprimer chaque bloc.
-  - **Gestion des Commandes** : Liste des commandes avec badge de statut et mise à jour (Nouveau, Confirmé, Livré, Annulé).
-  - **Réglages** : Modification du nom, numéro WhatsApp, téléphone, textes d'accueil et déconnexion.
+  - **Formulaire Produit (`nouveau.tsx` et `[id].tsx`)** : Titre, prix, stock, description, image avec sélecteur natif.
+  - **Composant `BlockEditor.tsx`** : Ajout illimité de blocs avec boutons pour monter, descendre, supprimer et uploader.
+  - **Gestion des Commandes** : Liste des commandes avec badge de statut et mise à jour.
+  - **Réglages** : Modification de la boutique et déconnexion sécurisée.
+
+### 4. Automatisation CI/CD & Build APK
+- [x] Création du fichier [`eas.json`](file:///home/menma/Shop%20Project/menma-store-app/eas.json) configuré pour générer des fichiers **APK directs** (`buildType: "apk"` pour les profils `preview` et `production`).
+- [x] Création du workflow GitHub Actions [`.github/workflows/eas-build.yml`](file:///home/menma/Shop%20Project/menma-store-app/.github/workflows/eas-build.yml) permettant de lancer la compilation de l'APK manuellement via GitHub Actions (`workflow_dispatch`) ou lors de la publication d'un tag/release.
+- [x] Création du workflow OTA [`.github/workflows/eas-update.yml`](file:///home/menma/Shop%20Project/menma-store-app/.github/workflows/eas-update.yml) pour déployer les mises à jour en direct sans recompiler l'APK.
 
 ---
 
@@ -75,7 +97,6 @@ Créer un écosystème e-commerce auto-hébergé (**Easy-Store**) sans dépendan
   - `SUPABASE_SERVICE_ROLE_KEY`
 
 ### Étape 2 : Améliorations Futures (sur les branches dédiées)
-- [ ] **Sélecteur d'upload direct d'images natives** : Intégrer `expo-image-picker` pour uploader directement le fichier binaire vers le bucket `products` de Supabase au lieu de renseigner une URL manuelle.
 - [ ] **Notifications sonores / push** lors d'une nouvelle commande dans l'app mobile via Expo Notifications.
 - [ ] **Recherche & Filtrage avancé** sur la grille de produits du site web (par mot-clé ou par catégorie si ajoutée).
 - [ ] **Génération de tickets / reçus PDF** pour les commandes livrées.
@@ -85,4 +106,5 @@ Créer un écosystème e-commerce auto-hébergé (**Easy-Store**) sans dépendan
 ## 📌 Règles de Travail pour les Futures Sessions d'IA
 1. Toujours consulter ce fichier `passation.md` avant de démarrer toute intervention.
 2. Travailler sur des branches au format `feat/...`, `style/...` ou `fix/...`. Ne jamais committer sur `main`.
-3. Mettre à jour ce document à la fin de chaque session.
+3. Chaque problème ou fonctionnalité doit avoir sa propre branche dédiée.
+4. Mettre à jour ce document à la fin de chaque session.
