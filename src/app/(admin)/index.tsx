@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { getProducts } from '../../lib/products';
 import { getOrders } from '../../lib/orders';
-import { Package, ShoppingBag, DollarSign, CheckCircle } from 'lucide-react-native';
+import { formatPrice } from '../../lib/utils';
+import { Package, ShoppingBag, DollarSign } from 'lucide-react-native';
 
 export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
@@ -52,7 +53,7 @@ export default function DashboardScreen() {
 
         <View style={[styles.statCard, styles.fullWidth]}>
           <DollarSign color="#4ade80" size={24} />
-          <Text style={styles.statNumber}>{Math.round(totalRevenue).toLocaleString('fr-FR')} GNF</Text>
+          <Text style={styles.statNumber}>{formatPrice(totalRevenue)}</Text>
           <Text style={styles.statLabel}>Chiffre d'affaires estimé</Text>
         </View>
       </View>
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 22,
-    fontWeight: 'black',
+    fontWeight: '900',
     color: '#fef9e7',
     marginTop: 10,
     marginBottom: 4,

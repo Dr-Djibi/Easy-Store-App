@@ -4,6 +4,17 @@ import { getOrders, updateOrderStatus } from '../../../lib/orders';
 import { formatPrice } from '../../../lib/utils';
 import type { Order } from '../../../types';
 
+function formatDate(dateStr: string) {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} à ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return dateStr;
+  }
+}
+
 export default function OrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +37,7 @@ export default function OrdersScreen() {
     const statuses: Order['statut'][] = ['nouveau', 'confirmé', 'livré', 'annulé'];
     Alert.alert(
       'Mettre à jour le statut',
-      `Modifier l'état de la commande pour ${order.product_nom}`,
+      `Modifier l'état de la commande pour "${order.product_nom}"`,
       statuses.map((st) => ({
         text: st.toUpperCase(),
         onPress: async () => {
@@ -51,7 +62,9 @@ export default function OrdersScreen() {
             <View style={styles.headerRow}>
               <Text style={styles.productName}>{item.product_nom}</Text>
               <View style={[styles.badge, getBadgeStyle(item.statut)]}>
-                <Text style={styles.badgeText}>{item.statut.toUpperCase()}</Text>
+                <Text style={[styles.badgeText, getBadgeTextStyle(item.statut)]}>
+                  {item.statut.toUpperCase()}
+                </Text>
               </View>
             </View>
 
@@ -68,7 +81,7 @@ export default function OrdersScreen() {
             </View>
 
             <Text style={styles.date}>
-              {new Date(item.created_at).toLocaleString('fr-FR')}
+              {formatDate(item.created_at)}
             </Text>
           </TouchableOpacity>
         )}
@@ -80,13 +93,26 @@ export default function OrdersScreen() {
 function getBadgeStyle(statut: string) {
   switch (statut) {
     case 'confirmé':
-      return { backgroundColor: 'rgba(56, 189, 248, 0.2)' };
+      return { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.3)' };
     case 'livré':
-      return { backgroundColor: 'rgba(74, 222, 128, 0.2)' };
+      return { backgroundColor: 'rgba(74, 222, 128, 0.15)', borderWidth: 1, borderColor: 'rgba(74, 222, 128, 0.3)' };
     case 'annulé':
-      return { backgroundColor: 'rgba(239, 68, 68, 0.2)' };
+      return { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)' };
     default:
-      return { backgroundColor: 'rgba(250, 204, 21, 0.2)' };
+      return { backgroundColor: 'rgba(250, 204, 21, 0.15)', borderWidth: 1, borderColor: 'rgba(250, 204, 21, 0.3)' };
+  }
+}
+
+function getBadgeTextStyle(statut: string) {
+  switch (statut) {
+    case 'confirmé':
+      return { color: '#38bdf8' };
+    case 'livré':
+      return { color: '#4ade80' };
+    case 'annulé':
+      return { color: '#ef4444' };
+    default:
+      return { color: '#facc15' };
   }
 }
 
@@ -127,13 +153,12 @@ const styles = StyleSheet.create({
   },
   badge: {
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: 6,
   },
   badgeText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#fef9e7',
   },
   amount: {
     fontSize: 13,
@@ -156,7 +181,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   date: {
-    fontSize: 10,
+    fontSize: 11,
     color: 'rgba(254, 249, 231, 0.4)',
     marginTop: 8,
     textAlign: 'right',
