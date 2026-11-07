@@ -4,6 +4,7 @@
     "slug": "easy-store-admin",
     "version": "1.0.0",
     "orientation": "portrait",
+    "owner": "dr-djibi",
     "scheme": "easystore",
     "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",

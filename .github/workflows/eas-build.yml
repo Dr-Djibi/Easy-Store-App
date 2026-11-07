@@ -56,6 +56,11 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      - name: 🔗 Ensure EAS Project Initialized
+        run: eas init --account dr-djibi --non-interactive || true
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
       - name: 🏗️ Trigger EAS Build (Génération APK)
         id: eas-build-step
         run: |
