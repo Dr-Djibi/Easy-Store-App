@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
 import { ArrowUp, ArrowDown, Trash2, ImagePlus } from 'lucide-react-native';
 import { pickAndUploadImage } from '../../lib/storage';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { SPACING, RADII, FONT_SIZE } from '@/constants/theme';
 import type { ContentBlock } from '../../types';
 
 export default function BlockEditor({
@@ -11,6 +13,7 @@ export default function BlockEditor({
   blocks: ContentBlock[];
   onChange: (blocks: ContentBlock[]) => void;
 }) {
+  const { colors, isDark } = useAppTheme();
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
   const addBlock = () => {
@@ -64,46 +67,84 @@ export default function BlockEditor({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Blocs de Persuasion (Rich-Content)</Text>
-      <Text style={styles.subtitle}>
-        Ajoutez des blocs pour structurer une page de vente persuasive (type Maestro).
+      <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
+        Blocs de Persuasion (Rich-Content Maestro)
+      </Text>
+      <Text style={[styles.subtitle, { color: colors.TEXT_MUTED }]}>
+        Structurez une page de vente persuasive avec des titres percutants, des preuves et des visuels.
       </Text>
 
       {blocks.map((block, idx) => (
-        <View key={block.id} style={styles.blockCard}>
+        <View
+          key={block.id}
+          style={[
+            styles.blockCard,
+            {
+              backgroundColor: colors.BG_CARD,
+              borderColor: colors.BORDER,
+              shadowColor: colors.TEXT_PRIMARY,
+              shadowOpacity: isDark ? 0 : 0.04,
+              elevation: isDark ? 0 : 1,
+            },
+          ]}
+        >
           <View style={styles.headerRow}>
-            <Text style={styles.blockNumber}>Bloc #{idx + 1}</Text>
+            <Text style={[styles.blockNumber, { color: colors.ACCENT }]}>Bloc d'argumentaire #{idx + 1}</Text>
             <View style={styles.actionsRow}>
               {idx > 0 && (
-                <TouchableOpacity onPress={() => moveUp(idx)} style={styles.iconBtn}>
-                  <ArrowUp size={16} color="#facc15" />
+                <TouchableOpacity
+                  onPress={() => moveUp(idx)}
+                  style={[styles.iconBtn, { backgroundColor: colors.BG_INPUT }]}
+                >
+                  <ArrowUp size={16} color={colors.ACCENT} />
                 </TouchableOpacity>
               )}
               {idx < blocks.length - 1 && (
-                <TouchableOpacity onPress={() => moveDown(idx)} style={styles.iconBtn}>
-                  <ArrowDown size={16} color="#facc15" />
+                <TouchableOpacity
+                  onPress={() => moveDown(idx)}
+                  style={[styles.iconBtn, { backgroundColor: colors.BG_INPUT }]}
+                >
+                  <ArrowDown size={16} color={colors.ACCENT} />
                 </TouchableOpacity>
               )}
-              <TouchableOpacity onPress={() => removeBlock(idx)} style={[styles.iconBtn, styles.deleteBtn]}>
-                <Trash2 size={16} color="#ef4444" />
+              <TouchableOpacity
+                onPress={() => removeBlock(idx)}
+                style={[styles.iconBtn, { backgroundColor: colors.DANGER_BG_LIGHT }]}
+              >
+                <Trash2 size={16} color={colors.DANGER} />
               </TouchableOpacity>
             </View>
           </View>
 
           <TextInput
-            placeholder="Grand Titre d'accroche (optionnel)"
-            placeholderTextColor="rgba(254, 249, 231, 0.4)"
+            placeholder="Grand Titre d'accroche (bénéfice client)"
+            placeholderTextColor={colors.TEXT_FAINT}
             value={block.titre || ''}
             onChangeText={(txt) => updateBlock(idx, { titre: txt })}
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: colors.BG_INPUT,
+                borderColor: colors.BORDER,
+                color: colors.TEXT_PRIMARY,
+              },
+            ]}
           />
 
           <TextInput
-            placeholder="Texte de vente / Paragraphe explicatif"
-            placeholderTextColor="rgba(254, 249, 231, 0.4)"
+            placeholder="Texte de vente / Paragraphe explicatif persuasif..."
+            placeholderTextColor={colors.TEXT_FAINT}
             value={block.texte || ''}
             onChangeText={(txt) => updateBlock(idx, { texte: txt })}
-            style={[styles.input, styles.textArea]}
+            style={[
+              styles.input,
+              styles.textArea,
+              {
+                backgroundColor: colors.BG_INPUT,
+                borderColor: colors.BORDER,
+                color: colors.TEXT_PRIMARY,
+              },
+            ]}
             multiline
             numberOfLines={4}
           />
@@ -112,37 +153,71 @@ export default function BlockEditor({
             <TouchableOpacity
               onPress={() => handlePickBlockImage(idx)}
               disabled={uploadingIdx === idx}
-              style={styles.pickBtn}
+              style={[
+                styles.pickBtn,
+                {
+                  backgroundColor: colors.BG_INPUT,
+                  borderColor: colors.ACCENT,
+                },
+              ]}
             >
               {uploadingIdx === idx ? (
-                <ActivityIndicator size="small" color="#facc15" />
+                <ActivityIndicator size="small" color={colors.ACCENT} />
               ) : (
                 <>
-                  <ImagePlus size={15} color="#facc15" />
-                  <Text style={styles.pickBtnText}>Photo</Text>
+                  <ImagePlus size={15} color={colors.ACCENT} />
+                  <Text style={[styles.pickBtnText, { color: colors.ACCENT }]}>Photo</Text>
                 </>
               )}
             </TouchableOpacity>
 
             <TextInput
-              placeholder="Ou URL de l'image"
-              placeholderTextColor="rgba(254, 249, 231, 0.4)"
+              placeholder="Ou URL de l'image d'illustration"
+              placeholderTextColor={colors.TEXT_FAINT}
               value={block.imageUrl || ''}
               onChangeText={(txt) => updateBlock(idx, { imageUrl: txt })}
-              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+              style={[
+                styles.input,
+                {
+                  flex: 1,
+                  marginBottom: 0,
+                  backgroundColor: colors.BG_INPUT,
+                  borderColor: colors.BORDER,
+                  color: colors.TEXT_PRIMARY,
+                },
+              ]}
             />
           </View>
 
+          {/* Aperçu image isolé sans débordement */}
           {block.imageUrl ? (
-            <View style={styles.previewContainer}>
-              <Image source={{ uri: block.imageUrl }} style={styles.imagePreview} />
+            <View style={[styles.previewWrapper, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}>
+              <View style={styles.previewImageContainer}>
+                <Image source={{ uri: block.imageUrl }} style={styles.imagePreview} resizeMode="cover" />
+              </View>
+              <TouchableOpacity
+                onPress={() => updateBlock(idx, { imageUrl: '' })}
+                style={styles.removeBlockImageBtn}
+              >
+                <Trash2 size={13} color={colors.DANGER} />
+                <Text style={[styles.removeBlockImageText, { color: colors.DANGER }]}>Supprimer</Text>
+              </TouchableOpacity>
             </View>
           ) : null}
         </View>
       ))}
 
-      <TouchableOpacity onPress={addBlock} style={styles.addBtn}>
-        <Text style={styles.addBtnText}>+ Ajouter un bloc de contenu</Text>
+      <TouchableOpacity
+        onPress={addBlock}
+        style={[
+          styles.addBtn,
+          {
+            borderColor: colors.ACCENT,
+            backgroundColor: colors.ACCENT_BG,
+          },
+        ]}
+      >
+        <Text style={[styles.addBtnText, { color: colors.ACCENT }]}>+ Ajouter un bloc d'argumentaire</Text>
       </TouchableOpacity>
     </View>
   );
@@ -150,63 +225,54 @@ export default function BlockEditor({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 16,
+    marginVertical: SPACING.md,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fef9e7',
+    fontSize: FONT_SIZE.base,
+    fontWeight: '800',
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 12,
-    color: 'rgba(254, 249, 231, 0.65)',
-    marginBottom: 12,
+    fontSize: FONT_SIZE.xs,
+    marginBottom: SPACING.md,
+    lineHeight: 18,
   },
   blockCard: {
-    backgroundColor: '#100e04',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 12,
+    borderRadius: RADII.xl,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 4,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: SPACING.sm,
   },
   blockNumber: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#facc15',
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '800',
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   iconBtn: {
     padding: 6,
-    borderRadius: 8,
-    backgroundColor: '#18160a',
-  },
-  deleteBtn: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderRadius: RADII.md,
   },
   input: {
-    backgroundColor: '#18160a',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 10,
-    color: '#fef9e7',
+    borderRadius: RADII.lg,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 13,
-    marginBottom: 8,
+    fontSize: FONT_SIZE.sm,
+    marginBottom: SPACING.sm,
   },
   textArea: {
-    height: 80,
+    height: 75,
     textAlignVertical: 'top',
   },
   imagePickerRow: {
@@ -218,44 +284,54 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#100e04',
     borderWidth: 1,
-    borderColor: 'rgba(250, 204, 21, 0.3)',
-    borderRadius: 10,
+    borderRadius: RADII.lg,
     paddingHorizontal: 10,
     paddingVertical: 10,
   },
   pickBtnText: {
-    color: '#facc15',
-    fontWeight: 'bold',
-    fontSize: 11,
+    fontWeight: '700',
+    fontSize: FONT_SIZE.xs,
   },
-  previewContainer: {
+  previewWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 8,
-    borderRadius: 10,
-    overflow: 'hidden',
+    padding: 6,
+    borderRadius: RADII.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    width: 60,
-    height: 60,
+  },
+  previewImageContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: RADII.md,
+    overflow: 'hidden',
   },
   imagePreview: {
     width: '100%',
     height: '100%',
-    borderRadius: 9,
+  },
+  removeBlockImageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  removeBlockImageText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '700',
   },
   addBtn: {
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#facc15',
-    borderRadius: 12,
+    borderRadius: RADII.xl,
     paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: 'rgba(250, 204, 21, 0.05)',
   },
   addBtnText: {
-    color: '#facc15',
-    fontWeight: 'bold',
-    fontSize: 14,
+    fontWeight: '800',
+    fontSize: FONT_SIZE.sm,
   },
 });

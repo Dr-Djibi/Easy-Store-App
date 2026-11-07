@@ -3,13 +3,15 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } fr
 import { useRouter } from 'expo-router';
 import { Plus, Eye, EyeOff, Trash2, Edit } from 'lucide-react-native';
 import { useProducts } from '@/hooks/useProducts';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { EmptyState } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
-import { COLORS, SPACING, RADII, FONT_SIZE } from '@/constants/theme';
+import { SPACING, RADII, FONT_SIZE } from '@/constants/theme';
 import type { Product } from '@/types';
 
 export default function ProductsListScreen() {
   const router = useRouter();
+  const { colors, isDark } = useAppTheme();
   const { products, loading, refresh, toggleActive, remove } = useProducts();
 
   useEffect(() => {
@@ -17,15 +19,15 @@ export default function ProductsListScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.BG_PRIMARY }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Articles ({products.length})</Text>
+        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Articles ({products.length})</Text>
         <TouchableOpacity
           onPress={() => router.push('/(admin)/produits/nouveau')}
-          style={styles.addBtn}
+          style={[styles.addBtn, { backgroundColor: colors.ACCENT }]}
         >
-          <Plus size={18} color={COLORS.BG_PRIMARY} />
-          <Text style={styles.addBtnText}>Nouveau</Text>
+          <Plus size={18} color={isDark ? '#060501' : '#ffffff'} />
+          <Text style={[styles.addBtnText, { color: isDark ? '#060501' : '#ffffff' }]}>Nouveau</Text>
         </TouchableOpacity>
       </View>
 
@@ -33,45 +35,74 @@ export default function ProductsListScreen() {
         data={products}
         keyExtractor={(item) => item.id}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={COLORS.ACCENT} />
+          <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.ACCENT} />
         }
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          !loading ? <EmptyState message="Aucun produit enregistré." icon="📦" /> : null
+          !loading ? <EmptyState message="Aucun produit enregistré pour le moment." icon="📦" /> : null
         }
         renderItem={({ item }: { item: Product }) => (
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.BG_CARD,
+                borderColor: colors.BORDER,
+                shadowColor: colors.TEXT_PRIMARY,
+                shadowOpacity: isDark ? 0 : 0.04,
+                elevation: isDark ? 0 : 2,
+              },
+            ]}
+          >
             <View style={styles.cardInfo}>
               <View style={styles.titleRow}>
-                <Text style={styles.productName}>{item.nom}</Text>
-                <View style={[styles.badge, item.actif ? styles.badgeActive : styles.badgeInactive]}>
-                  <Text style={styles.badgeText}>{item.actif ? 'Actif' : 'Inactif'}</Text>
+                <Text style={[styles.productName, { color: colors.TEXT_PRIMARY }]}>{item.nom}</Text>
+                <View
+                  style={[
+                    styles.badge,
+                    item.actif
+                      ? { backgroundColor: colors.SUCCESS_BG }
+                      : { backgroundColor: colors.MUTED_BG },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      { color: item.actif ? colors.SUCCESS : colors.TEXT_MUTED },
+                    ]}
+                  >
+                    {item.actif ? 'Actif' : 'Inactif'}
+                  </Text>
                 </View>
               </View>
-              <Text style={styles.productPrice}>{formatPrice(item.prix)}</Text>
-              <Text style={styles.blocksCount}>
-                {(item.content_blocks || []).length} bloc(s) de vente personnalisé(s)
+              <Text style={[styles.productPrice, { color: colors.ACCENT }]}>{formatPrice(item.prix)}</Text>
+              <Text style={[styles.blocksCount, { color: colors.TEXT_MUTED }]}>
+                {(item.content_blocks || []).length} bloc(s) de vente
               </Text>
             </View>
 
             <View style={styles.cardActions}>
-              <TouchableOpacity onPress={() => toggleActive(item.id, item.actif)} style={styles.actionBtn}>
-                {item.actif
-                  ? <Eye size={18} color={COLORS.SUCCESS} />
-                  : <EyeOff size={18} color="#94a3b8" />
-                }
+              <TouchableOpacity
+                onPress={() => toggleActive(item.id, item.actif)}
+                style={[styles.actionBtn, { backgroundColor: colors.BG_INPUT }]}
+              >
+                {item.actif ? (
+                  <Eye size={18} color={colors.SUCCESS} />
+                ) : (
+                  <EyeOff size={18} color={colors.TEXT_MUTED} />
+                )}
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => router.push(`/(admin)/produits/${item.id}`)}
-                style={styles.actionBtn}
+                style={[styles.actionBtn, { backgroundColor: colors.BG_INPUT }]}
               >
-                <Edit size={18} color={COLORS.INFO} />
+                <Edit size={18} color={colors.INFO} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => remove(item.id, item.nom)}
-                style={[styles.actionBtn, styles.deleteBtn]}
+                style={[styles.actionBtn, { backgroundColor: colors.DANGER_BG_LIGHT }]}
               >
-                <Trash2 size={18} color={COLORS.DANGER} />
+                <Trash2 size={18} color={colors.DANGER} />
               </TouchableOpacity>
             </View>
           </View>
@@ -84,86 +115,73 @@ export default function ProductsListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BG_PRIMARY,
-    padding: SPACING.xl,
+    padding: SPACING.lg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
   title: {
     fontSize: FONT_SIZE.xxl,
     fontWeight: '900',
-    color: COLORS.TEXT_PRIMARY,
+    letterSpacing: -0.5,
   },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm - 2,
-    backgroundColor: COLORS.ACCENT,
+    gap: 6,
     paddingHorizontal: 14,
-    paddingVertical: SPACING.sm + 2,
+    paddingVertical: 10,
     borderRadius: RADII.xl,
   },
   addBtnText: {
-    color: COLORS.BG_PRIMARY,
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: FONT_SIZE.sm,
   },
   list: {
     gap: SPACING.md,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: 110, // Dégagement barre basse flottante
   },
   card: {
-    backgroundColor: COLORS.BG_CARD,
     borderWidth: 1,
-    borderColor: COLORS.BORDER,
     borderRadius: RADII.xxl,
     padding: SPACING.lg,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
   },
   cardInfo: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.xs,
   },
   productName: {
     fontSize: FONT_SIZE.md,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '800',
     flex: 1,
     marginRight: SPACING.sm,
   },
   badge: {
     paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
+    paddingVertical: SPACING.xs - 1,
     borderRadius: RADII.sm,
-  },
-  badgeActive: {
-    backgroundColor: COLORS.SUCCESS_BG,
-  },
-  badgeInactive: {
-    backgroundColor: 'rgba(148, 163, 184, 0.15)',
   },
   badgeText: {
     fontSize: FONT_SIZE.xs,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '800',
   },
   productPrice: {
     fontSize: FONT_SIZE.sm,
-    fontWeight: 'bold',
-    color: COLORS.ACCENT,
-    marginBottom: SPACING.xs,
+    fontWeight: '800',
+    marginBottom: 2,
   },
   blocksCount: {
     fontSize: FONT_SIZE.xs,
-    color: COLORS.TEXT_MUTED,
   },
   cardActions: {
     flexDirection: 'row',
@@ -173,9 +191,5 @@ const styles = StyleSheet.create({
   actionBtn: {
     padding: SPACING.sm,
     borderRadius: RADII.md,
-    backgroundColor: COLORS.BG_INPUT,
-  },
-  deleteBtn: {
-    backgroundColor: COLORS.DANGER_BG_LIGHT,
   },
 });

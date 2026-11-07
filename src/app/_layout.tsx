@@ -4,12 +4,17 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSupabaseStore } from '../store/supabaseStore';
 import { useAuthStore } from '../store/authStore';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { useThemeStore } from '@/store/themeStore';
 
 export default function RootLayout() {
   const { loadConfig, client } = useSupabaseStore();
   const { setSession, setLoading } = useAuthStore();
+  const { colors, isDark } = useAppTheme();
+  const { loadTheme } = useThemeStore();
 
   useEffect(() => {
+    loadTheme();
     loadConfig();
   }, []);
 
@@ -34,12 +39,12 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#060501' },
-          headerTintColor: '#fef9e7',
-          contentStyle: { backgroundColor: '#060501' },
+          headerStyle: { backgroundColor: colors.BG_PRIMARY },
+          headerTintColor: colors.TEXT_PRIMARY,
+          contentStyle: { backgroundColor: colors.BG_PRIMARY },
           headerShadowVisible: false,
         }}
       >

@@ -1,16 +1,19 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Sun, Moon, LogOut, KeyRound } from 'lucide-react-native';
 import { useSettings } from '@/hooks/useSettings';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { FormField, LoadingScreen } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 import { useSupabaseStore } from '@/store/supabaseStore';
-import { COLORS, SPACING, RADII, FONT_SIZE } from '@/constants/theme';
+import { SPACING, RADII, FONT_SIZE } from '@/constants/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { colors, mode, setMode, isDark } = useAppTheme();
   const { signOut } = useAuthStore();
-  const { client, clearConfig } = useSupabaseStore();
+  const { client } = useSupabaseStore();
   const { form, setForm, loading, saving, load, save } = useSettings();
 
   useEffect(() => {
@@ -42,14 +45,70 @@ export default function SettingsScreen() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Paramètres Boutique</Text>
+    <ScrollView
+      style={[styles.scroll, { backgroundColor: colors.BG_PRIMARY }]}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Paramètres Boutique</Text>
 
-      <View style={styles.card}>
+      {/* SÉLECTEUR DE THÈME (PRIORITÉ 1) */}
+      <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+        <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Thème de l'Application</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.TEXT_MUTED }]}>
+          Basculez entre le mode clair (recommandé en plein soleil) et le mode sombre.
+        </Text>
+
+        <View style={[styles.themeSelectorRow, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}>
+          <TouchableOpacity
+            onPress={() => setMode('light')}
+            style={[
+              styles.themeBtn,
+              mode === 'light' && [styles.themeBtnActive, { backgroundColor: colors.BG_CARD, borderColor: colors.ACCENT }],
+            ]}
+          >
+            <Sun size={18} color={mode === 'light' ? colors.ACCENT : colors.TEXT_MUTED} />
+            <Text
+              style={[
+                styles.themeBtnText,
+                { color: mode === 'light' ? colors.TEXT_PRIMARY : colors.TEXT_MUTED },
+                mode === 'light' && styles.themeBtnTextBold,
+              ]}
+            >
+              Clair ☀️
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setMode('dark')}
+            style={[
+              styles.themeBtn,
+              mode === 'dark' && [styles.themeBtnActive, { backgroundColor: colors.BG_CARD, borderColor: colors.ACCENT }],
+            ]}
+          >
+            <Moon size={18} color={mode === 'dark' ? colors.ACCENT : colors.TEXT_MUTED} />
+            <Text
+              style={[
+                styles.themeBtnText,
+                { color: mode === 'dark' ? colors.TEXT_PRIMARY : colors.TEXT_MUTED },
+                mode === 'dark' && styles.themeBtnTextBold,
+              ]}
+            >
+              Sombre 🌙
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* COORDONNÉES DE LA BOUTIQUE */}
+      <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+        <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Identité & Contact</Text>
+        
         <FormField
           label="Nom de la Boutique"
           value={form.storeName}
           onChangeText={(v) => setForm((f) => ({ ...f, storeName: v }))}
+          placeholder="Ex: Mode Conakry Express"
         />
         <FormField
           label="Numéro WhatsApp Officiel (avec indicatif)"
@@ -59,7 +118,7 @@ export default function SettingsScreen() {
           keyboardType="phone-pad"
         />
         <FormField
-          label="Téléphone d'Appel"
+          label="Téléphone d'Appel Direct"
           value={form.phone}
           onChangeText={(v) => setForm((f) => ({ ...f, phone: v }))}
           placeholder="+224 600 00 00 00"
@@ -69,11 +128,13 @@ export default function SettingsScreen() {
           label="Titre de la Bannière d'Accueil"
           value={form.bannerTitle}
           onChangeText={(v) => setForm((f) => ({ ...f, bannerTitle: v }))}
+          placeholder="Ex: Nouveautés Exclusives"
         />
         <FormField
           label="Sous-Titre de la Bannière"
           value={form.bannerSubtitle}
           onChangeText={(v) => setForm((f) => ({ ...f, bannerSubtitle: v }))}
+          placeholder="Ex: Livraison express en 24h à domicile"
           multiline
           numberOfLines={2}
           style={styles.textArea}
@@ -82,22 +143,38 @@ export default function SettingsScreen() {
         <TouchableOpacity
           onPress={save}
           disabled={saving}
-          style={[styles.saveBtn, saving && styles.disabled]}
+          style={[styles.saveBtn, { backgroundColor: colors.ACCENT }, saving && styles.disabled]}
         >
-          {saving
-            ? <ActivityIndicator color={COLORS.BG_PRIMARY} />
-            : <Text style={styles.saveBtnText}>Enregistrer</Text>
-          }
+          {saving ? (
+            <ActivityIndicator color={isDark ? '#060501' : '#ffffff'} />
+          ) : (
+            <Text style={[styles.saveBtnText, { color: isDark ? '#060501' : '#ffffff' }]}>
+              Enregistrer les Réglages
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 
+      {/* ZONE CONNEXION & ACCÈS */}
       <View style={styles.dangerZone}>
-        <TouchableOpacity onPress={() => router.push('/config')} style={styles.changeKeyBtn}>
-          <Text style={styles.changeKeyText}>Modifier les Clés Supabase</Text>
+        <TouchableOpacity
+          onPress={() => router.push('/config')}
+          style={[styles.secondaryBtn, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}
+        >
+          <KeyRound size={16} color={colors.TEXT_MUTED} />
+          <Text style={[styles.secondaryBtnText, { color: colors.TEXT_PRIMARY }]}>
+            Modifier les Clés Supabase
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Se Déconnecter</Text>
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={[styles.logoutBtn, { backgroundColor: colors.DANGER_BG_LIGHT, borderColor: colors.DANGER_BORDER }]}
+        >
+          <LogOut size={16} color={colors.DANGER} />
+          <Text style={[styles.logoutText, { color: colors.DANGER }]}>
+            Se Déconnecter
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -105,72 +182,111 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
   container: {
-    padding: SPACING.xl,
-    backgroundColor: COLORS.BG_PRIMARY,
-    flexGrow: 1,
+    padding: SPACING.lg,
+    paddingBottom: 110, // Dégagement pour la barre flottante du bas
   },
   title: {
     fontSize: FONT_SIZE.xxl,
     fontWeight: '900',
-    color: COLORS.TEXT_PRIMARY,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
+    letterSpacing: -0.5,
   },
   card: {
-    backgroundColor: COLORS.BG_CARD,
     borderWidth: 1,
-    borderColor: COLORS.BORDER,
     borderRadius: RADII.xxl,
     padding: SPACING.lg,
-    marginBottom: SPACING.xxl,
+    marginBottom: SPACING.xl,
+  },
+  sectionTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '800',
+    marginBottom: SPACING.xs,
+  },
+  sectionSubtitle: {
+    fontSize: FONT_SIZE.xs,
+    marginBottom: SPACING.md,
+    lineHeight: 18,
+  },
+  themeSelectorRow: {
+    flexDirection: 'row',
+    borderRadius: RADII.xl,
+    padding: 4,
+    borderWidth: 1,
+    gap: 4,
+  },
+  themeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    borderRadius: RADII.lg,
+  },
+  themeBtnActive: {
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  themeBtnText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+  },
+  themeBtnTextBold: {
+    fontWeight: '800',
   },
   textArea: {
-    height: 60,
+    height: 64,
     textAlignVertical: 'top',
   },
   saveBtn: {
-    backgroundColor: COLORS.ACCENT,
     paddingVertical: 14,
     borderRadius: RADII.xl,
     alignItems: 'center',
     marginTop: SPACING.sm,
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.6,
   },
   saveBtnText: {
-    color: COLORS.BG_PRIMARY,
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: FONT_SIZE.base,
   },
   dangerZone: {
     gap: SPACING.md,
     marginBottom: SPACING.xxxl,
   },
-  changeKeyBtn: {
-    backgroundColor: COLORS.BG_INPUT,
+  secondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     borderWidth: 1,
-    borderColor: COLORS.BORDER,
     paddingVertical: 14,
     borderRadius: RADII.xl,
-    alignItems: 'center',
   },
-  changeKeyText: {
-    color: COLORS.ACCENT,
-    fontWeight: '600',
+  secondaryBtnText: {
+    fontWeight: '700',
     fontSize: FONT_SIZE.sm,
   },
   logoutBtn: {
-    backgroundColor: COLORS.DANGER_BG_LIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     borderWidth: 1,
-    borderColor: COLORS.DANGER_BORDER,
     paddingVertical: 14,
     borderRadius: RADII.xl,
-    alignItems: 'center',
   },
   logoutText: {
-    color: COLORS.DANGER,
-    fontWeight: 'bold',
+    fontWeight: '800',
     fontSize: FONT_SIZE.sm,
   },
 });
