@@ -40,7 +40,8 @@
         {
           "photosPermission": "Easy Store a besoin d'accéder à vos photos pour ajouter des visuels à vos produits."
         }
-      ]
+      ],
+      "expo-asset"
     ]
   }
 }
