@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Easyphy Admin",
-    "slug": "easyphy-admin",
+    "name": "Easyphy",
+    "slug": "easyphy",
     "version": "1.0.0",
     "orientation": "portrait",
     "owner": "dr-djibi",
@@ -15,11 +15,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.easyphy.admin",
+      "bundleIdentifier": "com.easyphy.app",
       "icon": "./assets/icon.png"
     },
     "android": {
-      "package": "com.easyphy.admin",
+      "package": "com.easyphy.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#060501"
