@@ -15,7 +15,7 @@ export default function ConfigScreen() {
 
   const testAndSave = async () => {
     if (!url.trim() || !anonKey.trim()) {
-      Alert.alert('Champs requis', 'Veuillez saisir au moins l\'URL Supabase et l\'Anon Key.');
+      Alert.alert('Champs requis', 'Veuillez renseigner au minimum l\'adresse URL Supabase et la clé publique.');
       return;
     }
 
@@ -29,7 +29,7 @@ export default function ConfigScreen() {
       }
 
       await setConfig(url.trim(), anonKey.trim(), serviceKey.trim());
-      Alert.alert('Succès 🎉', 'Votre boutique est maintenant connectée à Supabase !', [
+      Alert.alert('Succès', 'Votre boutique est maintenant connectée à Supabase.', [
         { text: 'Continuer', onPress: () => router.replace('/login') },
       ]);
     } catch (err: unknown) {
@@ -63,7 +63,7 @@ export default function ConfigScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Clé Publique (Anon Key) *</Text>
+          <Text style={styles.label}>Clé Publique Anon *</Text>
           <TextInput
             placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
             placeholderTextColor="rgba(254, 249, 231, 0.4)"
@@ -76,9 +76,9 @@ export default function ConfigScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Clé Secrète (Service Role Key - optionnel)</Text>
+          <Text style={styles.label}>Clé Secrète Service Role optionnelle</Text>
           <TextInput
-            placeholder="Clé admin pour contourner les restrictions d'upload"
+            placeholder="Clé admin pour contourner les restrictions de stockage"
             placeholderTextColor="rgba(254, 249, 231, 0.4)"
             value={serviceKey}
             onChangeText={setServiceKey}
@@ -96,7 +96,7 @@ export default function ConfigScreen() {
           {loading ? (
             <ActivityIndicator color="#060501" />
           ) : (
-            <Text style={styles.btnText}>Tester & Sauvegarder</Text>
+            <Text style={styles.btnText}>Tester et Sauvegarder</Text>
           )}
         </TouchableOpacity>
       </View>

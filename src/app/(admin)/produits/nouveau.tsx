@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,45 +11,97 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   ArrowLeft,
+  Check,
   ImagePlus,
   Trash2,
   Plus,
   Star,
   Link as LinkIcon,
+  Tag,
+  Layers,
+  ChevronDown,
 } from 'lucide-react-native';
 import { createProduct } from '../../../lib/products';
-import { generateSlug } from '../../../lib/utils';
+import { generateSlug, formatPrice } from '../../../lib/utils';
 import { pickAndUploadImage } from '../../../lib/storage';
 import RichTextEditor from '../../../components/product/RichTextEditor';
-import BlockEditor from '../../../components/product/BlockEditor';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { SPACING, RADII, FONT_SIZE } from '@/constants/theme';
-import type { ContentBlock } from '../../../types';
+import type { ProductStatus, ProductVariant } from '../../../types';
 
 export default function NewProductScreen() {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
 
-  // État du produit
-  const [actif, setActif] = useState(true);
+  // 1. Général & Contenu
   const [nom, setNom] = useState('');
   const [slug, setSlug] = useState('');
   const [isCustomSlug, setIsCustomSlug] = useState(false);
-  const [prix, setPrix] = useState('');
-  const [coutAchat, setCoutAchat] = useState('');
-  const [stock, setStock] = useState('10');
   const [description, setDescription] = useState('');
+
+  // 2. Médias
   const [images, setImages] = useState<string[]>([]);
   const [newMediaUrl, setNewMediaUrl] = useState('');
   const [showAddUrlInput, setShowAddUrlInput] = useState(false);
-  const [blocks, setBlocks] = useState<ContentBlock[]>([]);
 
+  // 3. Tarification
+  const [prix, setPrix] = useState('');
+  const [prixComparaison, setPrixComparaison] = useState('');
+  const [coutAchat, setCoutAchat] = useState('');
+  const [facturerTaxe, setFacturerTaxe] = useState(false);
+
+  // 4. Stocks / Inventaire
+  const [sku, setSku] = useState('');
+  const [codeBarre, setCodeBarre] = useState('');
+  const [suivreStock, setSuivreStock] = useState(true);
+  const [vendreEnRupture, setVendreEnRupture] = useState(false);
+  const [stock, setStock] = useState('0');
+
+  // 5. Expédition
+  const [produitPhysique, setProduitPhysique] = useState(true);
+  const [poids, setPoids] = useState('0.0');
+  const [unitePoids, setUnitePoids] = useState<'kg' | 'g' | 'lb' | 'oz'>('kg');
+
+  // 6. Variantes
+  const [variantes, setVariantes] = useState<ProductVariant[]>([]);
+  const [variantOptionName, setVariantOptionName] = useState('');
+  const [variantOptionValues, setVariantOptionValues] = useState('');
+  const [showAddVariant, setShowAddVariant] = useState(false);
+
+  // 7. Organisation
+  const [statut, setStatut] = useState<ProductStatus>('actif');
+  const [categorie, setCategorie] = useState('');
+  const [typeProduit, setTypeProduit] = useState('');
+  const [fournisseur, setFournisseur] = useState('');
+  const [tagInput, setTagInput] = useState('');
+  const [balises, setBalises] = useState<string[]>([]);
+
+  // États de chargement
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Calculs dynamiques de marge Shopify
+  const marginMetrics = useMemo(() => {
+    const salePrice = parseFloat(prix.replace(/[^0-9.]/g, '')) || 0;
+    const cost = parseFloat(coutAchat.replace(/[^0-9.]/g, '')) || 0;
+
+    if (salePrice <= 0 || cost <= 0) {
+      return { profit: '--', marginPct: '--' };
+    }
+
+    const profitVal = salePrice - cost;
+    const marginPctVal = Math.round((profitVal / salePrice) * 100);
+
+    return {
+      profit: formatPrice(profitVal),
+      marginPct: `${marginPctVal}%`,
+    };
+  }, [prix, coutAchat]);
 
   const handleNomChange = (text: string) => {
     setNom(text);
@@ -68,7 +120,7 @@ export default function NewProductScreen() {
         Alert.alert('Erreur', res.error);
       }
     } catch {
-      Alert.alert('Erreur', "Impossible d'importer l'image sélectionnée.");
+      Alert.alert('Erreur', 'Impossible de charger le média.');
     } finally {
       setUploadingImage(false);
     }
@@ -78,7 +130,7 @@ export default function NewProductScreen() {
     const trimmed = newMediaUrl.trim();
     if (!trimmed) return;
     if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-      Alert.alert('Format Invalide', 'Veuillez saisir une URL valide commençant par http:// ou https://');
+      Alert.alert('Format invalide', 'Veuillez saisir une adresse web valide débutant par http:// ou https://');
       return;
     }
     setImages((prev) => [...prev, trimmed]);
@@ -98,6 +150,50 @@ export default function NewProductScreen() {
     });
   };
 
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim();
+    if (trimmed && !balises.includes(trimmed)) {
+      setBalises((prev) => [...prev, trimmed]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setBalises((prev) => prev.filter((t) => t !== tag));
+  };
+
+  const handleAddVariant = () => {
+    if (!variantOptionName.trim()) {
+      Alert.alert('Nom requis', 'Indiquez un nom d\'option comme Taille ou Couleur.');
+      return;
+    }
+    const values = variantOptionValues
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    if (values.length === 0) {
+      Alert.alert('Valeurs requises', 'Indiquez au moins une valeur séparée par des virgules.');
+      return;
+    }
+
+    setVariantes((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        option_name: variantOptionName.trim(),
+        option_values: values,
+      },
+    ]);
+    setVariantOptionName('');
+    setVariantOptionValues('');
+    setShowAddVariant(false);
+  };
+
+  const handleRemoveVariant = (id: string) => {
+    setVariantes((prev) => prev.filter((v) => v.id !== id));
+  };
+
   const handleSave = async () => {
     if (!nom.trim()) {
       Alert.alert('Champ requis', 'Veuillez saisir le titre du produit.');
@@ -106,14 +202,22 @@ export default function NewProductScreen() {
 
     const numericPrice = parseFloat(prix.replace(/[^0-9.]/g, ''));
     if (isNaN(numericPrice) || numericPrice < 0) {
-      Alert.alert('Prix invalide', 'Veuillez saisir un prix de vente valide.');
+      Alert.alert('Prix invalide', 'Veuillez saisir un montant de vente valide.');
       return;
     }
+
+    const numericCompare = prixComparaison.trim()
+      ? parseFloat(prixComparaison.replace(/[^0-9.]/g, ''))
+      : undefined;
+
+    const numericCoutAchat = coutAchat.trim()
+      ? parseFloat(coutAchat.replace(/[^0-9.]/g, ''))
+      : undefined;
 
     const numericStock = parseInt(stock.replace(/[^0-9]/g, ''), 10);
     const finalStock = isNaN(numericStock) ? 0 : numericStock;
 
-    const numericCoutAchat = coutAchat.trim() ? parseFloat(coutAchat.replace(/[^0-9.]/g, '')) : undefined;
+    const numericPoids = poids.trim() ? parseFloat(poids.replace(/[^0-9.]/g, '')) : undefined;
 
     setLoading(true);
 
@@ -124,16 +228,31 @@ export default function NewProductScreen() {
         nom: nom.trim(),
         slug: finalSlug,
         prix: numericPrice,
+        prix_comparaison: numericCompare,
         cout_achat: numericCoutAchat,
+        facturer_taxe: facturerTaxe,
         stock: finalStock,
+        sku: sku.trim() || null,
+        code_barre: codeBarre.trim() || null,
+        suivre_stock: suivreStock,
+        vendre_en_rupture: vendreEnRupture,
+        produit_physique: produitPhysique,
+        poids: numericPoids,
+        unite_poids: unitePoids,
         description: description.trim() || null,
         images,
-        content_blocks: blocks,
-        actif,
+        content_blocks: [],
+        actif: statut === 'actif',
+        statut,
+        categorie: categorie.trim() || null,
+        type_produit: typeProduit.trim() || null,
+        fournisseur: fournisseur.trim() || null,
+        balises,
+        variantes,
       });
 
       if (!res.success) {
-        throw new Error(res.error || 'Erreur lors de la création.');
+        throw new Error(res.error || 'Erreur lors de la création du produit.');
       }
 
       router.back();
@@ -150,28 +269,32 @@ export default function NewProductScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
     >
-      {/* HEADER POLARIS : BOUTON RETOUR & ACTIONS PROPRES */}
+      {/* HEADER SHOPIFY FIDÈLE : RETOUR / TITRE / CHECKMARK */}
       <View style={[styles.topBar, { backgroundColor: colors.BG_PRIMARY, borderBottomColor: colors.BORDER }]}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={[styles.backBtn, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={styles.headerIconBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="Retour"
         >
-          <ArrowLeft size={18} color={colors.TEXT_PRIMARY} />
+          <ArrowLeft size={22} color={colors.TEXT_PRIMARY} />
         </TouchableOpacity>
-        <Text style={[styles.topBarTitle, { color: colors.TEXT_PRIMARY }]}>Ajouter un produit</Text>
+
+        <Text style={[styles.topBarTitle, { color: colors.TEXT_PRIMARY }]} numberOfLines={1}>
+          Ajouter un produit
+        </Text>
+
         <TouchableOpacity
           onPress={handleSave}
           disabled={loading}
-          style={[styles.topBarSaveBtn, { backgroundColor: colors.ACCENT }]}
-          activeOpacity={0.8}
+          style={[styles.headerIconBtn, loading && styles.disabled]}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="Enregistrer le produit"
         >
           {loading ? (
-            <ActivityIndicator size="small" color={isDark ? '#060501' : '#ffffff'} />
+            <ActivityIndicator size="small" color={colors.ACCENT} />
           ) : (
-            <Text style={[styles.topBarSaveBtnText, { color: isDark ? '#060501' : '#ffffff' }]}>
-              Enregistrer
-            </Text>
+            <Check size={22} color={colors.TEXT_PRIMARY} strokeWidth={2.4} />
           )}
         </TouchableOpacity>
       </View>
@@ -180,17 +303,14 @@ export default function NewProductScreen() {
         style={[styles.scroll, { backgroundColor: colors.BG_PRIMARY }]}
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled={true}
         showsVerticalScrollIndicator={false}
       >
-        {/* CARTE 1 : INFORMATIONS GÉNÉRALES */}
+        {/* SECTION 1 : TITRE & DESCRIPTION */}
         <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
-          <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>Informations générales</Text>
-
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Titre du produit *</Text>
+            <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Titre</Text>
             <TextInput
-              placeholder="Ex: T-Shirt Coton Bio Noir"
+              placeholder="Chemise à manches courtes"
               placeholderTextColor={colors.TEXT_FAINT}
               value={nom}
               onChangeText={handleNomChange}
@@ -206,9 +326,18 @@ export default function NewProductScreen() {
           </View>
 
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Identifiant URL (Slug)</Text>
+            <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Description</Text>
+            <RichTextEditor
+              value={description}
+              onChange={setDescription}
+              placeholder="Rédigez la description détaillée..."
+            />
+          </View>
+
+          <View style={styles.field}>
+            <Text style={[styles.fieldLabelSubtle, { color: colors.TEXT_MUTED }]}>Identifiant URL personnalisé</Text>
             <TextInput
-              placeholder="t-shirt-coton-bio-noir"
+              placeholder="chemise-manches-courtes"
               placeholderTextColor={colors.TEXT_FAINT}
               value={slug}
               onChangeText={(txt) => {
@@ -228,123 +357,11 @@ export default function NewProductScreen() {
           </View>
         </View>
 
-        {/* CARTE 2 : STATUT DU PRODUIT */}
+        {/* SECTION 2 : MÉDIAS */}
         <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
-          <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>Statut du produit</Text>
-          <Text style={[styles.cardSubtitle, { color: colors.TEXT_MUTED }]}>
-            Définissez si ce produit est immédiatement visible et commandable par vos clients.
-          </Text>
-
-          <View style={[styles.segmentedControl, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}>
-            <TouchableOpacity
-              onPress={() => setActif(true)}
-              style={[
-                styles.segmentedBtn,
-                actif && [styles.segmentedBtnActive, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }],
-              ]}
-            >
-              <View style={[styles.statusDot, { backgroundColor: colors.SUCCESS }]} />
-              <Text
-                style={[
-                  styles.segmentedBtnText,
-                  { color: actif ? colors.TEXT_PRIMARY : colors.TEXT_MUTED },
-                  actif && styles.segmentedBtnTextBold,
-                ]}
-              >
-                Actif
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setActif(false)}
-              style={[
-                styles.segmentedBtn,
-                !actif && [styles.segmentedBtnActive, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }],
-              ]}
-            >
-              <View style={[styles.statusDot, { backgroundColor: colors.TEXT_MUTED }]} />
-              <Text
-                style={[
-                  styles.segmentedBtnText,
-                  { color: !actif ? colors.TEXT_PRIMARY : colors.TEXT_MUTED },
-                  !actif && styles.segmentedBtnTextBold,
-                ]}
-              >
-                Brouillon
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* CARTE 3 : TARIFICATION & INVENTAIRE */}
-        <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
-          <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>Tarification et stock</Text>
-
-          <View style={styles.row}>
-            <View style={[styles.field, { flex: 1 }]}>
-              <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Prix de vente *</Text>
-              <TextInput
-                placeholder="0"
-                placeholderTextColor={colors.TEXT_FAINT}
-                value={prix}
-                onChangeText={setPrix}
-                keyboardType="numeric"
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.BG_INPUT,
-                    borderColor: colors.BORDER,
-                    color: colors.TEXT_PRIMARY,
-                  },
-                ]}
-              />
-            </View>
-
-            <View style={[styles.field, { flex: 1 }]}>
-              <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Coût d'achat</Text>
-              <TextInput
-                placeholder="Optionnel"
-                placeholderTextColor={colors.TEXT_FAINT}
-                value={coutAchat}
-                onChangeText={setCoutAchat}
-                keyboardType="numeric"
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.BG_INPUT,
-                    borderColor: colors.BORDER,
-                    color: colors.TEXT_PRIMARY,
-                  },
-                ]}
-              />
-            </View>
-
-            <View style={[styles.field, { flex: 1 }]}>
-              <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Stock</Text>
-              <TextInput
-                placeholder="10"
-                placeholderTextColor={colors.TEXT_FAINT}
-                value={stock}
-                onChangeText={setStock}
-                keyboardType="numeric"
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.BG_INPUT,
-                    borderColor: colors.BORDER,
-                    color: colors.TEXT_PRIMARY,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* CARTE 4 : MÉDIAS */}
-        <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
-          <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>Médias ({images.length})</Text>
-          <Text style={[styles.cardSubtitle, { color: colors.TEXT_MUTED }]}>
-            La première image est la vignette principale affichée sur la boutique.
+          <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Médias</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.TEXT_MUTED }]}>
+            Ajoutez des fichiers vidéo, image ou visuels de démonstration.
           </Text>
 
           <ScrollView
@@ -372,7 +389,7 @@ export default function NewProductScreen() {
               style={[styles.addMediaThumb, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}
             >
               <LinkIcon size={18} color={colors.TEXT_MUTED} />
-              <Text style={[styles.addMediaThumbText, { color: colors.TEXT_MUTED }]}>URL</Text>
+              <Text style={[styles.addMediaThumbText, { color: colors.TEXT_MUTED }]}>Lien URL</Text>
             </TouchableOpacity>
 
             {images.map((imgUri, idx) => {
@@ -449,32 +466,472 @@ export default function NewProductScreen() {
           )}
         </View>
 
-        {/* CARTE 5 : DESCRIPTION */}
-        <RichTextEditor
-          value={description}
-          onChange={setDescription}
-          placeholder="Rédigez la description détaillée du produit..."
-        />
+        {/* SECTION 3 : TARIFICATION */}
+        <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+          <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Tarification</Text>
 
-        {/* CARTE 6 : BLOCS DE VENTE ENRICHIS */}
-        <BlockEditor blocks={blocks} onChange={setBlocks} />
+          <View style={styles.row}>
+            <View style={[styles.field, { flex: 1 }]}>
+              <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Prix</Text>
+              <TextInput
+                placeholder="0"
+                placeholderTextColor={colors.TEXT_FAINT}
+                value={prix}
+                onChangeText={setPrix}
+                keyboardType="numeric"
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.BG_INPUT,
+                    borderColor: colors.BORDER,
+                    color: colors.TEXT_PRIMARY,
+                  },
+                ]}
+              />
+            </View>
 
-        {/* BOUTON D'ENREGISTREMENT FLOTTANT/BAS */}
+            <View style={[styles.field, { flex: 1 }]}>
+              <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Prix d'origine</Text>
+              <TextInput
+                placeholder="0"
+                placeholderTextColor={colors.TEXT_FAINT}
+                value={prixComparaison}
+                onChangeText={setPrixComparaison}
+                keyboardType="numeric"
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.BG_INPUT,
+                    borderColor: colors.BORDER,
+                    color: colors.TEXT_PRIMARY,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+
+          <View style={styles.row}>
+            <View style={[styles.field, { flex: 1 }]}>
+              <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Coût par article</Text>
+              <TextInput
+                placeholder="0"
+                placeholderTextColor={colors.TEXT_FAINT}
+                value={coutAchat}
+                onChangeText={setCoutAchat}
+                keyboardType="numeric"
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.BG_INPUT,
+                    borderColor: colors.BORDER,
+                    color: colors.TEXT_PRIMARY,
+                  },
+                ]}
+              />
+            </View>
+
+            <View style={[styles.field, { flex: 1 }]}>
+              <Text style={[styles.fieldLabelSubtle, { color: colors.TEXT_MUTED }]}>Marge bénéficiaire</Text>
+              <View
+                style={[
+                  styles.readonlyMetricBox,
+                  { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER },
+                ]}
+              >
+                <Text style={[styles.metricValue, { color: colors.TEXT_PRIMARY }]}>
+                  {marginMetrics.profit}
+                </Text>
+                <Text style={[styles.metricSub, { color: colors.TEXT_MUTED }]}>
+                  Marge brute : {marginMetrics.marginPct}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.switchRow, { borderTopColor: colors.BORDER_FAINT }]}>
+            <View style={styles.switchInfo}>
+              <Text style={[styles.switchLabel, { color: colors.TEXT_PRIMARY }]}>
+                Facturer la taxe sur ce produit
+              </Text>
+            </View>
+            <Switch
+              value={facturerTaxe}
+              onValueChange={setFacturerTaxe}
+              trackColor={{ false: colors.BORDER, true: colors.ACCENT }}
+              thumbColor={facturerTaxe ? (isDark ? '#060501' : '#ffffff') : '#f4f3f4'}
+            />
+          </View>
+        </View>
+
+        {/* SECTION 4 : STOCKS */}
+        <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+          <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Stocks</Text>
+
+          <View style={styles.row}>
+            <View style={[styles.field, { flex: 1 }]}>
+              <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Code SKU</Text>
+              <TextInput
+                placeholder="Ex: CHEMISE-NOIR-L"
+                placeholderTextColor={colors.TEXT_FAINT}
+                value={sku}
+                onChangeText={setSku}
+                autoCapitalize="characters"
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.BG_INPUT,
+                    borderColor: colors.BORDER,
+                    color: colors.TEXT_PRIMARY,
+                  },
+                ]}
+              />
+            </View>
+
+            <View style={[styles.field, { flex: 1 }]}>
+              <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Code-barres</Text>
+              <TextInput
+                placeholder="ISBN, UPC, GTIN"
+                placeholderTextColor={colors.TEXT_FAINT}
+                value={codeBarre}
+                onChangeText={setCodeBarre}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.BG_INPUT,
+                    borderColor: colors.BORDER,
+                    color: colors.TEXT_PRIMARY,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+
+          <View style={[styles.switchRow, { borderTopColor: colors.BORDER_FAINT }]}>
+            <View style={styles.switchInfo}>
+              <Text style={[styles.switchLabel, { color: colors.TEXT_PRIMARY }]}>
+                Suivre la quantité
+              </Text>
+            </View>
+            <Switch
+              value={suivreStock}
+              onValueChange={setSuivreStock}
+              trackColor={{ false: colors.BORDER, true: colors.ACCENT }}
+              thumbColor={suivreStock ? (isDark ? '#060501' : '#ffffff') : '#f4f3f4'}
+            />
+          </View>
+
+          <View style={[styles.switchRow, { borderTopColor: colors.BORDER_FAINT }]}>
+            <View style={styles.switchInfo}>
+              <Text style={[styles.switchLabel, { color: colors.TEXT_PRIMARY }]}>
+                Poursuivre la vente en cas de rupture de stock
+              </Text>
+            </View>
+            <Switch
+              value={vendreEnRupture}
+              onValueChange={setVendreEnRupture}
+              trackColor={{ false: colors.BORDER, true: colors.ACCENT }}
+              thumbColor={vendreEnRupture ? (isDark ? '#060501' : '#ffffff') : '#f4f3f4'}
+            />
+          </View>
+
+          <View style={[styles.field, { marginTop: SPACING.md }]}>
+            <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Quantité disponible</Text>
+            <TextInput
+              placeholder="0"
+              placeholderTextColor={colors.TEXT_FAINT}
+              value={stock}
+              onChangeText={setStock}
+              keyboardType="numeric"
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.BG_INPUT,
+                  borderColor: colors.BORDER,
+                  color: colors.TEXT_PRIMARY,
+                },
+              ]}
+            />
+          </View>
+        </View>
+
+        {/* SECTION 5 : EXPÉDITION */}
+        <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+          <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Expédition</Text>
+
+          <View style={[styles.switchRow, { borderTopWidth: 0, paddingBottom: SPACING.md }]}>
+            <View style={styles.switchInfo}>
+              <Text style={[styles.switchLabel, { color: colors.TEXT_PRIMARY }]}>
+                Produit physique
+              </Text>
+            </View>
+            <Switch
+              value={produitPhysique}
+              onValueChange={setProduitPhysique}
+              trackColor={{ false: colors.BORDER, true: colors.ACCENT }}
+              thumbColor={produitPhysique ? (isDark ? '#060501' : '#ffffff') : '#f4f3f4'}
+            />
+          </View>
+
+          {produitPhysique && (
+            <View style={styles.row}>
+              <View style={[styles.field, { flex: 2 }]}>
+                <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Poids du colis</Text>
+                <TextInput
+                  placeholder="0.0"
+                  placeholderTextColor={colors.TEXT_FAINT}
+                  value={poids}
+                  onChangeText={setPoids}
+                  keyboardType="numeric"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.BG_INPUT,
+                      borderColor: colors.BORDER,
+                      color: colors.TEXT_PRIMARY,
+                    },
+                  ]}
+                />
+              </View>
+
+              <View style={[styles.field, { flex: 1 }]}>
+                <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Unité</Text>
+                <View style={[styles.segmentedUnit, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}>
+                  {(['kg', 'g'] as const).map((u) => (
+                    <TouchableOpacity
+                      key={u}
+                      onPress={() => setUnitePoids(u)}
+                      style={[
+                        styles.unitBtn,
+                        unitePoids === u && [styles.unitBtnActive, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }],
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.unitBtnText,
+                          { color: unitePoids === u ? colors.TEXT_PRIMARY : colors.TEXT_MUTED },
+                          unitePoids === u && styles.unitBtnTextBold,
+                        ]}
+                      >
+                        {u}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* SECTION 6 : VARIANTES */}
+        <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+          <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Variantes</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.TEXT_MUTED }]}>
+            Ajoutez des options de personnalisation telles que la taille, la couleur ou le matériau.
+          </Text>
+
+          {variantes.map((v) => (
+            <View
+              key={v.id}
+              style={[styles.variantItemBox, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}
+            >
+              <View style={styles.variantItemHeader}>
+                <Text style={[styles.variantItemName, { color: colors.TEXT_PRIMARY }]}>
+                  {v.option_name}
+                </Text>
+                <TouchableOpacity onPress={() => handleRemoveVariant(v.id)}>
+                  <Trash2 size={16} color={colors.DANGER} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.variantTagWrap}>
+                {v.option_values.map((val, idx) => (
+                  <View key={idx} style={[styles.variantPill, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+                    <Text style={[styles.variantPillText, { color: colors.TEXT_PRIMARY }]}>{val}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ))}
+
+          {showAddVariant ? (
+            <View style={[styles.addVariantForm, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}>
+              <View style={styles.field}>
+                <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Nom de l'option</Text>
+                <TextInput
+                  placeholder="Ex: Taille ou Couleur"
+                  placeholderTextColor={colors.TEXT_FAINT}
+                  value={variantOptionName}
+                  onChangeText={setVariantOptionName}
+                  style={[styles.input, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER, color: colors.TEXT_PRIMARY }]}
+                />
+              </View>
+
+              <View style={styles.field}>
+                <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Valeurs séparées par une virgule</Text>
+                <TextInput
+                  placeholder="Ex: S, M, L, XL"
+                  placeholderTextColor={colors.TEXT_FAINT}
+                  value={variantOptionValues}
+                  onChangeText={setVariantOptionValues}
+                  style={[styles.input, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER, color: colors.TEXT_PRIMARY }]}
+                />
+              </View>
+
+              <View style={styles.variantFormActions}>
+                <TouchableOpacity
+                  onPress={() => setShowAddVariant(false)}
+                  style={[styles.variantCancelBtn, { borderColor: colors.BORDER }]}
+                >
+                  <Text style={[styles.variantCancelText, { color: colors.TEXT_MUTED }]}>Annuler</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleAddVariant}
+                  style={[styles.variantAddConfirmBtn, { backgroundColor: colors.ACCENT }]}
+                >
+                  <Text style={[styles.variantAddConfirmText, { color: isDark ? '#060501' : '#ffffff' }]}>
+                    Ajouter l'option
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={() => setShowAddVariant(true)}
+              style={[styles.addOptionBtn, { borderColor: colors.BORDER }]}
+              activeOpacity={0.7}
+            >
+              <Plus size={16} color={colors.TEXT_PRIMARY} />
+              <Text style={[styles.addOptionBtnText, { color: colors.TEXT_PRIMARY }]}>
+                Ajouter une option comme la taille ou la couleur
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* SECTION 7 : ORGANISATION DU PRODUIT */}
+        <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+          <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Organisation du produit</Text>
+
+          {/* SÉLECTEUR DE STATUT */}
+          <View style={styles.field}>
+            <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Statut</Text>
+            <View style={[styles.segmentedStatut, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}>
+              {(['actif', 'brouillon', 'archivé'] as const).map((st) => (
+                <TouchableOpacity
+                  key={st}
+                  onPress={() => setStatut(st)}
+                  style={[
+                    styles.statutBtn,
+                    statut === st && [styles.statutBtnActive, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }],
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statutBtnText,
+                      { color: statut === st ? colors.TEXT_PRIMARY : colors.TEXT_MUTED },
+                      statut === st && styles.statutBtnTextBold,
+                    ]}
+                  >
+                    {st === 'actif' ? 'Actif' : st === 'brouillon' ? 'Ébauche' : 'Archivé'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Catégorie</Text>
+            <TextInput
+              placeholder="Vêtements, Accessoires, High-Tech..."
+              placeholderTextColor={colors.TEXT_FAINT}
+              value={categorie}
+              onChangeText={setCategorie}
+              style={[styles.input, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER, color: colors.TEXT_PRIMARY }]}
+            />
+          </View>
+
+          <View style={styles.field}>
+            <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Type de produit</Text>
+            <TextInput
+              placeholder="T-Shirt, Montre, Luminaire..."
+              placeholderTextColor={colors.TEXT_FAINT}
+              value={typeProduit}
+              onChangeText={setTypeProduit}
+              style={[styles.input, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER, color: colors.TEXT_PRIMARY }]}
+            />
+          </View>
+
+          <View style={styles.field}>
+            <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Fournisseur ou fabricant</Text>
+            <TextInput
+              placeholder="Nom du fournisseur"
+              placeholderTextColor={colors.TEXT_FAINT}
+              value={fournisseur}
+              onChangeText={setFournisseur}
+              style={[styles.input, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER, color: colors.TEXT_PRIMARY }]}
+            />
+          </View>
+
+          {/* BALISES / TAGS */}
+          <View style={styles.field}>
+            <Text style={[styles.fieldLabel, { color: colors.TEXT_PRIMARY }]}>Balises</Text>
+            <View style={styles.tagInputRow}>
+              <TextInput
+                placeholder="Nouvelle balise..."
+                placeholderTextColor={colors.TEXT_FAINT}
+                value={tagInput}
+                onChangeText={setTagInput}
+                onSubmitEditing={handleAddTag}
+                style={[
+                  styles.input,
+                  {
+                    flex: 1,
+                    marginBottom: 0,
+                    backgroundColor: colors.BG_INPUT,
+                    borderColor: colors.BORDER,
+                    color: colors.TEXT_PRIMARY,
+                  },
+                ]}
+              />
+              <TouchableOpacity
+                onPress={handleAddTag}
+                style={[styles.addTagBtn, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}
+              >
+                <Plus size={16} color={colors.TEXT_PRIMARY} />
+              </TouchableOpacity>
+            </View>
+
+            {balises.length > 0 && (
+              <View style={styles.tagWrap}>
+                {balises.map((tag) => (
+                  <View
+                    key={tag}
+                    style={[styles.tagPill, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}
+                  >
+                    <Tag size={12} color={colors.TEXT_MUTED} />
+                    <Text style={[styles.tagText, { color: colors.TEXT_PRIMARY }]}>{tag}</Text>
+                    <TouchableOpacity onPress={() => handleRemoveTag(tag)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                      <Trash2 size={12} color={colors.DANGER} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* BOUTON FINAL DE SAUVEGARDE */}
         <TouchableOpacity
           onPress={handleSave}
           disabled={loading}
-          style={[
-            styles.saveBtn,
-            { backgroundColor: colors.ACCENT },
-            loading && styles.disabled,
-          ]}
+          style={[styles.saveBtn, { backgroundColor: colors.ACCENT }, loading && styles.disabled]}
           activeOpacity={0.8}
         >
           {loading ? (
             <ActivityIndicator color={isDark ? '#060501' : '#ffffff'} />
           ) : (
             <Text style={[styles.saveBtnText, { color: isDark ? '#060501' : '#ffffff' }]}>
-              {actif ? 'Publier le produit' : 'Enregistrer en brouillon'}
+              Enregistrer l'article
             </Text>
           )}
         </TouchableOpacity>
@@ -496,28 +953,18 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
   },
-  backBtn: {
+  headerIconBtn: {
     width: 38,
     height: 38,
-    borderRadius: RADII.lg,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   topBarTitle: {
     fontSize: FONT_SIZE.base,
     fontWeight: '700',
-  },
-  topBarSaveBtn: {
-    paddingHorizontal: 14,
-    height: 36,
-    borderRadius: RADII.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topBarSaveBtnText: {
-    fontSize: FONT_SIZE.xs,
-    fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: SPACING.sm,
   },
   scroll: {
     flex: 1,
@@ -532,12 +979,12 @@ const styles = StyleSheet.create({
     borderRadius: RADII.xl,
     padding: SPACING.lg,
   },
-  cardTitle: {
+  sectionTitle: {
     fontSize: FONT_SIZE.base,
     fontWeight: '700',
     marginBottom: 4,
   },
-  cardSubtitle: {
+  sectionSubtitle: {
     fontSize: FONT_SIZE.xs,
     marginBottom: SPACING.md,
     lineHeight: 16,
@@ -545,12 +992,16 @@ const styles = StyleSheet.create({
   field: {
     marginBottom: SPACING.md,
   },
-  label: {
+  fieldLabel: {
     fontSize: FONT_SIZE.xs,
     fontWeight: '700',
     marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
+  },
+  fieldLabelSubtle: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
@@ -563,41 +1014,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.md,
   },
-  segmentedControl: {
-    flexDirection: 'row',
-    borderRadius: RADII.lg,
-    padding: 3,
+  readonlyMetricBox: {
     borderWidth: 1,
-    gap: 4,
+    borderRadius: RADII.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minHeight: 44,
+    justifyContent: 'center',
   },
-  segmentedBtn: {
-    flex: 1,
+  metricValue: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '700',
+  },
+  metricSub: {
+    fontSize: 10,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 9,
-    borderRadius: RADII.md,
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm + 2,
+    borderTopWidth: 1,
   },
-  segmentedBtnActive: {
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+  switchInfo: {
+    flex: 1,
+    paddingRight: SPACING.md,
   },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  segmentedBtnText: {
-    fontSize: FONT_SIZE.xs,
+  switchLabel: {
+    fontSize: FONT_SIZE.sm,
     fontWeight: '600',
-  },
-  segmentedBtnTextBold: {
-    fontWeight: '700',
   },
   mediaCarouselScroll: {
     flexDirection: 'row',
@@ -673,6 +1120,163 @@ const styles = StyleSheet.create({
     borderRadius: RADII.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  segmentedUnit: {
+    flexDirection: 'row',
+    borderRadius: RADII.lg,
+    padding: 3,
+    borderWidth: 1,
+    gap: 4,
+    height: 44,
+  },
+  unitBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADII.md,
+  },
+  unitBtnActive: {
+    borderWidth: 1,
+  },
+  unitBtnText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+  },
+  unitBtnTextBold: {
+    fontWeight: '800',
+  },
+  variantItemBox: {
+    borderWidth: 1,
+    borderRadius: RADII.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  variantItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  variantItemName: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '700',
+  },
+  variantTagWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  variantPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADII.md,
+    borderWidth: 1,
+  },
+  variantPillText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '500',
+  },
+  addOptionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: RADII.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginTop: 4,
+  },
+  addOptionBtnText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+  },
+  addVariantForm: {
+    borderWidth: 1,
+    borderRadius: RADII.lg,
+    padding: SPACING.md,
+    marginTop: 4,
+  },
+  variantFormActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 6,
+  },
+  variantCancelBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADII.md,
+    borderWidth: 1,
+  },
+  variantCancelText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+  },
+  variantAddConfirmBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: RADII.md,
+  },
+  variantAddConfirmText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '700',
+  },
+  segmentedStatut: {
+    flexDirection: 'row',
+    borderRadius: RADII.lg,
+    padding: 3,
+    borderWidth: 1,
+    gap: 4,
+  },
+  statutBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    borderRadius: RADII.md,
+  },
+  statutBtnActive: {
+    borderWidth: 1,
+  },
+  statutBtnText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+  },
+  statutBtnTextBold: {
+    fontWeight: '800',
+  },
+  tagInputRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  addTagBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: RADII.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 8,
+  },
+  tagPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: RADII.full,
+    borderWidth: 1,
+  },
+  tagText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
   },
   saveBtn: {
     paddingVertical: 14,

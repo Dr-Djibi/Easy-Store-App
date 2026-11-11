@@ -52,11 +52,11 @@ export default function SettingsScreen() {
     >
       <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Paramètres Boutique</Text>
 
-      {/* SÉLECTEUR DE THÈME (PRIORITÉ 1) */}
+      {/* SÉLECTEUR DE THÈME */}
       <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
         <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Thème de l'Application</Text>
         <Text style={[styles.sectionSubtitle, { color: colors.TEXT_MUTED }]}>
-          Basculez entre le mode clair (recommandé en plein soleil) et le mode sombre.
+          Basculez entre l'affichage clair et le contraste sombre selon vos préférences.
         </Text>
 
         <View style={[styles.themeSelectorRow, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}>
@@ -75,7 +75,7 @@ export default function SettingsScreen() {
                 mode === 'light' && styles.themeBtnTextBold,
               ]}
             >
-              Clair ☀️
+              Clair
             </Text>
           </TouchableOpacity>
 
@@ -94,7 +94,7 @@ export default function SettingsScreen() {
                 mode === 'dark' && styles.themeBtnTextBold,
               ]}
             >
-              Sombre 🌙
+              Sombre
             </Text>
           </TouchableOpacity>
         </View>
@@ -102,7 +102,7 @@ export default function SettingsScreen() {
 
       {/* COORDONNÉES DE LA BOUTIQUE */}
       <View style={[styles.card, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
-        <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Identité & Contact</Text>
+        <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Identité et Contact</Text>
         
         <FormField
           label="Nom de la Boutique"
@@ -111,7 +111,7 @@ export default function SettingsScreen() {
           placeholder="Ex: Mode Conakry Express"
         />
         <FormField
-          label="Numéro WhatsApp Officiel (avec indicatif)"
+          label="Numéro WhatsApp Officiel avec indicatif"
           value={form.whatsapp}
           onChangeText={(v) => setForm((f) => ({ ...f, whatsapp: v }))}
           placeholder="Ex: 224600000000"
@@ -155,7 +155,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ZONE CONNEXION & ACCÈS */}
+      {/* ZONE CONNEXION ET ACCÈS */}
       <View style={styles.dangerZone}>
         <TouchableOpacity
           onPress={() => router.push('/config')}
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: SPACING.lg,
-    paddingBottom: 110, // Dégagement pour la barre flottante du bas
+    paddingBottom: 110,
   },
   title: {
     fontSize: FONT_SIZE.xxl,

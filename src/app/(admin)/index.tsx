@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet, RefreshControl } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Package, ShoppingBag, DollarSign, TrendingUp, RotateCcw } from 'lucide-react-native';
 import { useProducts } from '@/hooks/useProducts';
 import { useOrders } from '@/hooks/useOrders';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -58,43 +58,42 @@ export default function DashboardScreen() {
       }
     >
       <View style={styles.header}>
-        <Text style={[styles.welcome, { color: colors.TEXT_PRIMARY }]}>Tableau de bord 📊</Text>
+        <Text style={[styles.welcome, { color: colors.TEXT_PRIMARY }]}>Tableau de bord</Text>
         <Text style={[styles.subtitle, { color: colors.TEXT_MUTED }]}>
-          Aperçu instantané des performances de votre boutique Easyphy.
+          Aperçu instantané des performances de votre boutique.
         </Text>
       </View>
 
       <View style={styles.grid}>
         <StatCard
-          icon={<Ionicons name="cube-outline" color={colors.ACCENT} size={24} />}
+          icon={<Package color={colors.ACCENT} size={22} />}
           value={products.length}
           label="Articles au catalogue"
         />
         <StatCard
-          icon={<Ionicons name="bag-handle-outline" color={colors.INFO} size={24} />}
+          icon={<ShoppingBag color={colors.INFO} size={22} />}
           value={orders.length}
           label="Commandes reçues"
         />
         <StatCard
-          icon={<Ionicons name="cash-outline" color={colors.SUCCESS} size={24} />}
+          icon={<DollarSign color={colors.SUCCESS} size={22} />}
           value={formatPrice(totalRevenue)}
           label="Chiffre d'affaires brut"
           style={styles.fullWidth}
         />
         <StatCard
-          icon={<Ionicons name="trending-up-outline" color={colors.SUCCESS} size={24} />}
+          icon={<TrendingUp color={colors.SUCCESS} size={22} />}
           value={formatPrice(totalMargin)}
           label="Marge brute estimée"
         />
         <StatCard
           icon={
-            <Ionicons
-              name="refresh-circle-outline"
+            <RotateCcw
               color={returnRate > 30 ? colors.DANGER : returnRate > 15 ? '#f97316' : colors.SUCCESS}
-              size={24}
+              size={22}
             />
           }
-          value={`${returnRate}% (${returnedCount})`}
+          value={`${returnRate}% - ${returnedCount} retour`}
           label="Taux de retour colis"
         />
       </View>
@@ -108,7 +107,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: SPACING.lg,
-    paddingBottom: 110, // Dégagement barre basse flottante
+    paddingBottom: 110,
   },
   header: {
     marginBottom: SPACING.xl,

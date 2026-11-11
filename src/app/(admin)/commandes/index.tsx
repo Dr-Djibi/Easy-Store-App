@@ -28,7 +28,12 @@ export default function OrdersScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BG_PRIMARY }]}>
-      <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Commandes Reçues ({orders.length})</Text>
+      <View style={styles.headerRowTop}>
+        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Commandes Reçues</Text>
+        <View style={[styles.countBadge, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+          <Text style={[styles.countBadgeText, { color: colors.TEXT_MUTED }]}>{orders.length}</Text>
+        </View>
+      </View>
 
       <FlatList
         data={orders}
@@ -38,7 +43,7 @@ export default function OrdersScreen() {
         }
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          !loading ? <EmptyState message="Aucune commande reçue pour le moment." icon="🛒" /> : null
+          !loading ? <EmptyState message="Aucune commande enregistrée pour le moment." /> : null
         }
         renderItem={({ item }: { item: Order }) => (
           <TouchableOpacity
@@ -86,15 +91,30 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: SPACING.lg,
   },
+  headerRowTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: SPACING.lg,
+  },
   title: {
     fontSize: FONT_SIZE.xxl,
     fontWeight: '900',
-    marginBottom: SPACING.lg,
     letterSpacing: -0.5,
+  },
+  countBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADII.full,
+    borderWidth: 1,
+  },
+  countBadgeText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '700',
   },
   list: {
     gap: SPACING.md,
-    paddingBottom: 110, // Dégagement barre basse flottante
+    paddingBottom: 110,
   },
   card: {
     borderWidth: 1,
