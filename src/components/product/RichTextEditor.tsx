@@ -34,6 +34,7 @@ import {
   Eye,
   Check,
   X,
+  Play,
 } from 'lucide-react-native';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { SPACING, RADII, FONT_SIZE } from '@/constants/theme';
@@ -93,34 +94,29 @@ export default function RichTextEditor({
 
     onChange(nextValue);
 
-    // Repositionne la sélection
     const newCursor = start + replacement.length;
     setSelection({ start: newCursor, end: newCursor });
   };
 
-  // Gestion des Titres
   const handleHeading = (level: 1 | 2 | 0) => {
     if (level === 1) {
       insertText('\n# ', '\n', 'Titre Principal');
     } else if (level === 2) {
       insertText('\n## ', '\n', 'Sous-Titre');
     } else {
-      insertText('\n', '\n', 'Paragraphe normal');
+      insertText('\n', '\n', 'Paragraphe standard');
     }
   };
 
-  // Alignements
   const handleAlign = (align: 'left' | 'center' | 'right' | 'justify') => {
     insertText(`\n<div align="${align}">\n`, '\n</div>\n', 'Texte avec alignement');
   };
 
-  // Couleurs
   const handleSelectColor = (selectedColor: string) => {
     insertText(`<span style="color:${selectedColor}">`, '</span>', 'Texte coloré');
     setShowColorPicker(false);
   };
 
-  // Insertion de Lien
   const handleInsertLink = () => {
     if (!linkUrl.trim()) return;
     const label = linkText.trim() || 'Lien';
@@ -130,7 +126,6 @@ export default function RichTextEditor({
     setShowLinkModal(false);
   };
 
-  // Upload ou Insertion d'Image Inline
   const handlePickInlineImage = async () => {
     setUploadingInlineImage(true);
     try {
@@ -154,23 +149,20 @@ export default function RichTextEditor({
     setShowImageModal(false);
   };
 
-  // Insertion de Vidéo
   const handleConfirmVideo = () => {
     if (!videoUrl.trim()) return;
     const title = videoTitle.trim() || 'Vidéo de démonstration';
-    insertText(`\n[▶️ ${title}](`, ')\n', videoUrl.trim());
+    insertText(`\n[VIDEO: ${title}](`, ')\n', videoUrl.trim());
     setVideoTitle('');
     setVideoUrl('');
     setShowVideoModal(false);
   };
 
-  // Insertion de Tableau
   const handleInsertTable = () => {
-    const tableTemplate = `\n| Caractéristique | Spécification |\n| --- | --- |\n| Modèle / Réf | ZS-100 |\n| Qualité | Premium Certifié |\n`;
+    const tableTemplate = `\n| Caractéristique | Spécification |\n| --- | --- |\n| Modèle | Conforme |\n| Qualité | Certifiée |\n`;
     insertText(tableTemplate);
   };
 
-  // Rendu de prévisualisation WYSIWYG épuré
   const renderPreview = () => {
     if (!value.trim()) {
       return (
@@ -180,7 +172,6 @@ export default function RichTextEditor({
       );
     }
 
-    // Découpage par lignes
     const lines = value.split('\n');
 
     return (
@@ -188,12 +179,10 @@ export default function RichTextEditor({
         {lines.map((line, idx) => {
           const trimmed = line.trim();
 
-          // Ligne vide
           if (!trimmed) {
             return <View key={idx} style={{ height: 10 }} />;
           }
 
-          // Titre 1 (# ...)
           if (trimmed.startsWith('# ')) {
             return (
               <Text key={idx} style={[styles.previewH1, { color: colors.TEXT_PRIMARY }]}>
@@ -202,7 +191,6 @@ export default function RichTextEditor({
             );
           }
 
-          // Titre 2 (## ...)
           if (trimmed.startsWith('## ')) {
             return (
               <Text key={idx} style={[styles.previewH2, { color: colors.TEXT_PRIMARY }]}>
@@ -211,7 +199,6 @@ export default function RichTextEditor({
             );
           }
 
-          // Image inline (![alt](url))
           const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
           if (imgMatch) {
             const [, alt, url] = imgMatch;
@@ -223,19 +210,20 @@ export default function RichTextEditor({
             );
           }
 
-          // Vidéo inline ([▶️ ...](url))
-          const videoMatch = trimmed.match(/^\[▶️\s*(.*?)\]\((.*?)\)$/);
+          const videoMatch = trimmed.match(/^\[VIDEO:\s*(.*?)\]\((.*?)\)$/);
           if (videoMatch) {
             const [, title, url] = videoMatch;
             return (
               <View key={idx} style={[styles.previewVideoBox, { borderColor: colors.ACCENT, backgroundColor: colors.ACCENT_BG }]}>
-                <Text style={[styles.previewVideoTitle, { color: colors.ACCENT }]}>▶️ {title}</Text>
+                <View style={styles.videoTitleRow}>
+                  <Play size={14} color={colors.ACCENT} />
+                  <Text style={[styles.previewVideoTitle, { color: colors.ACCENT }]}>{title}</Text>
+                </View>
                 <Text style={[styles.previewVideoUrl, { color: colors.TEXT_MUTED }]} numberOfLines={1}>{url}</Text>
               </View>
             );
           }
 
-          // Liste à puces (• ou -)
           if (trimmed.startsWith('• ') || trimmed.startsWith('- ')) {
             return (
               <View key={idx} style={styles.previewListRow}>
@@ -247,7 +235,6 @@ export default function RichTextEditor({
             );
           }
 
-          // Liste numérotée (1. ...)
           const numMatch = trimmed.match(/^(\d+)\.\s*(.*)$/);
           if (numMatch) {
             return (
@@ -260,9 +247,8 @@ export default function RichTextEditor({
             );
           }
 
-          // Ligne de tableau markdown
           if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
-            if (trimmed.includes('---')) return null; // Séparateur d'en-tête
+            if (trimmed.includes('---')) return null;
             const cells = trimmed.split('|').filter(Boolean).map((c) => c.trim());
             return (
               <View key={idx} style={[styles.previewTableRow, { borderColor: colors.BORDER, backgroundColor: colors.BG_INPUT }]}>
@@ -275,7 +261,6 @@ export default function RichTextEditor({
             );
           }
 
-          // Paragraphe standard
           return (
             <Text key={idx} style={[styles.previewP, { color: colors.TEXT_PRIMARY }]}>
               {line}
@@ -288,16 +273,15 @@ export default function RichTextEditor({
 
   return (
     <View style={[styles.editorCard, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
-      {/* EN-TÊTE DU BLOC ÉDITEUR & BASCULE DE MODE */}
+      {/* EN-TÊTE DU BLOC ÉDITEUR */}
       <View style={[styles.headerBar, { borderBottomColor: colors.BORDER }]}>
         <View style={styles.headerTitleRow}>
-          <Text style={[styles.editorTitle, { color: colors.TEXT_PRIMARY }]}>Description Complète (WYSIWYG)</Text>
+          <Text style={[styles.editorTitle, { color: colors.TEXT_PRIMARY }]}>Description Détaillée</Text>
           <View style={[styles.badgePill, { backgroundColor: colors.ACCENT_BG }]}>
-            <Text style={[styles.badgeText, { color: colors.ACCENT }]}>Rich-Text</Text>
+            <Text style={[styles.badgeText, { color: colors.ACCENT }]}>Format enrichi</Text>
           </View>
         </View>
 
-        {/* BASCULE ÉDITION / APERÇU DIRECT */}
         <View style={[styles.modeToggle, { backgroundColor: colors.BG_INPUT }]}>
           <TouchableOpacity
             onPress={() => setMode('edit')}
@@ -333,11 +317,10 @@ export default function RichTextEditor({
         </View>
       </View>
 
-      {/* BARRE D'OUTILS WYSIWYG HORIZONTALE COMPLÈTE */}
+      {/* BARRE D'OUTILS COMPLÈTE */}
       {mode === 'edit' && (
         <View style={[styles.toolbarContainer, { borderBottomColor: colors.BORDER, backgroundColor: colors.BG_INPUT }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarScroll}>
-            {/* GROUPE 1 : TITRES & TYPOGRAPHIE */}
             <TouchableOpacity onPress={() => handleHeading(1)} style={styles.toolBtn}>
               <Heading1 size={17} color={colors.TEXT_PRIMARY} />
             </TouchableOpacity>
@@ -350,7 +333,6 @@ export default function RichTextEditor({
 
             <View style={[styles.toolDivider, { backgroundColor: colors.BORDER }]} />
 
-            {/* GROUPE 2 : MISES EN FORME DU TEXTE */}
             <TouchableOpacity onPress={() => insertText('**', '**', 'Texte en gras')} style={styles.toolBtn}>
               <Bold size={17} color={colors.TEXT_PRIMARY} />
             </TouchableOpacity>
@@ -363,7 +345,6 @@ export default function RichTextEditor({
 
             <View style={[styles.toolDivider, { backgroundColor: colors.BORDER }]} />
 
-            {/* GROUPE 3 : COULEUR & PERSONNALISATION */}
             <TouchableOpacity
               onPress={() => setShowColorPicker(!showColorPicker)}
               style={[styles.toolBtn, showColorPicker && { backgroundColor: colors.ACCENT_BG }]}
@@ -371,7 +352,6 @@ export default function RichTextEditor({
               <Palette size={17} color={showColorPicker ? colors.ACCENT : colors.TEXT_PRIMARY} />
             </TouchableOpacity>
 
-            {/* GROUPE 4 : ALIGNEMENTS */}
             <TouchableOpacity onPress={() => handleAlign('left')} style={styles.toolBtn}>
               <AlignLeft size={17} color={colors.TEXT_PRIMARY} />
             </TouchableOpacity>
@@ -387,20 +367,18 @@ export default function RichTextEditor({
 
             <View style={[styles.toolDivider, { backgroundColor: colors.BORDER }]} />
 
-            {/* GROUPE 5 : LISTES & STRUCTURE */}
             <TouchableOpacity onPress={() => insertText('\n• ', '', 'Point clé')} style={styles.toolBtn}>
               <List size={17} color={colors.TEXT_PRIMARY} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => insertText('\n1. ', '', 'Étape importante')} style={styles.toolBtn}>
+            <TouchableOpacity onPress={() => insertText('\n1. ', '', 'Étape')} style={styles.toolBtn}>
               <ListOrdered size={17} color={colors.TEXT_PRIMARY} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => insertText('\n  - ', '', 'Détail indenté')} style={styles.toolBtn}>
+            <TouchableOpacity onPress={() => insertText('\n  - ', '', 'Détail')} style={styles.toolBtn}>
               <IndentIncrease size={17} color={colors.TEXT_PRIMARY} />
             </TouchableOpacity>
 
             <View style={[styles.toolDivider, { backgroundColor: colors.BORDER }]} />
 
-            {/* GROUPE 6 : MÉDIAS & INTÉGRATIONS */}
             <TouchableOpacity onPress={() => setShowLinkModal(true)} style={styles.toolBtn}>
               <LinkIcon size={17} color={colors.TEXT_PRIMARY} />
             </TouchableOpacity>
@@ -417,7 +395,7 @@ export default function RichTextEditor({
         </View>
       )}
 
-      {/* SÉLECTEUR DE COULEURS INLINE */}
+      {/* SÉLECTEUR DE COULEURS */}
       {showColorPicker && (
         <View style={[styles.colorPickerRow, { backgroundColor: colors.BG_INPUT, borderBottomColor: colors.BORDER }]}>
           <Text style={[styles.colorPickerLabel, { color: colors.TEXT_MUTED }]}>Choisir une couleur :</Text>
@@ -434,7 +412,7 @@ export default function RichTextEditor({
         </View>
       )}
 
-      {/* ZONE DE SAISIE DE TEXTE (CONFINÉE SANS SUPERPOSITION) */}
+      {/* ZONE DE SAISIE */}
       {mode === 'edit' ? (
         <TextInput
           ref={inputRef}
@@ -451,22 +429,22 @@ export default function RichTextEditor({
           placeholder={placeholder}
           placeholderTextColor={colors.TEXT_FAINT}
           multiline
-          scrollEnabled={false} // Délègue le scroll au ScrollView parent pour éviter le blocage tactile
+          scrollEnabled={false}
           textAlignVertical="top"
         />
       ) : (
         <View style={styles.previewScrollArea}>{renderPreview()}</View>
       )}
 
-      {/* PIED DE L'ÉDITEUR AVEC STATISTIQUES */}
+      {/* PIED DE L'ÉDITEUR */}
       <View style={[styles.footerBar, { borderTopColor: colors.BORDER }]}>
         <Text style={[styles.footerStat, { color: colors.TEXT_MUTED }]}>
-          {value.length} caractère(s) • {value.trim() ? value.trim().split(/\s+/).length : 0} mot(s)
+          {value.length} caractères • {value.trim() ? value.trim().split(/\s+/).length : 0} mots
         </Text>
-        <Text style={[styles.footerHint, { color: colors.TEXT_FAINT }]}>Markdown + HTML</Text>
+        <Text style={[styles.footerHint, { color: colors.TEXT_FAINT }]}>Formatage visuel actif</Text>
       </View>
 
-      {/* MODAL 1 : INSERTION DE LIEN */}
+      {/* MODAL 1 : LIEN */}
       <Modal visible={showLinkModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
@@ -478,14 +456,14 @@ export default function RichTextEditor({
             </View>
 
             <TextInput
-              placeholder="Texte du lien (ex: Découvrir nos offres)"
+              placeholder="Intitulé du lien"
               placeholderTextColor={colors.TEXT_FAINT}
               value={linkText}
               onChangeText={setLinkText}
               style={[styles.modalInput, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER, color: colors.TEXT_PRIMARY }]}
             />
             <TextInput
-              placeholder="URL cible (https://...)"
+              placeholder="Adresse URL de destination"
               placeholderTextColor={colors.TEXT_FAINT}
               value={linkUrl}
               onChangeText={setLinkUrl}
@@ -506,12 +484,12 @@ export default function RichTextEditor({
         </View>
       </Modal>
 
-      {/* MODAL 2 : INSERTION D'IMAGE INLINE */}
+      {/* MODAL 2 : IMAGE INLINE */}
       <Modal visible={showImageModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.TEXT_PRIMARY }]}>Insérer une Image Inline</Text>
+              <Text style={[styles.modalTitle, { color: colors.TEXT_PRIMARY }]}>Insérer une Image</Text>
               <TouchableOpacity onPress={() => setShowImageModal(false)}>
                 <X size={20} color={colors.TEXT_MUTED} />
               </TouchableOpacity>
@@ -533,7 +511,7 @@ export default function RichTextEditor({
             </TouchableOpacity>
 
             <TextInput
-              placeholder="Ou coller une URL d'image (https://...)"
+              placeholder="Ou coller une adresse web d'image"
               placeholderTextColor={colors.TEXT_FAINT}
               value={imageUrl}
               onChangeText={setImageUrl}
@@ -542,7 +520,7 @@ export default function RichTextEditor({
             />
 
             <TextInput
-              placeholder="Légende / Texte alternatif (Alt)"
+              placeholder="Légende ou texte alternatif descriptif"
               placeholderTextColor={colors.TEXT_FAINT}
               value={imageAlt}
               onChangeText={setImageAlt}
@@ -562,7 +540,7 @@ export default function RichTextEditor({
         </View>
       </Modal>
 
-      {/* MODAL 3 : INSERTION DE VIDÉO */}
+      {/* MODAL 3 : VIDÉO */}
       <Modal visible={showVideoModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
@@ -574,14 +552,14 @@ export default function RichTextEditor({
             </View>
 
             <TextInput
-              placeholder="Titre de la vidéo (ex: Démo produit)"
+              placeholder="Titre de présentation de la vidéo"
               placeholderTextColor={colors.TEXT_FAINT}
               value={videoTitle}
               onChangeText={setVideoTitle}
               style={[styles.modalInput, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER, color: colors.TEXT_PRIMARY }]}
             />
             <TextInput
-              placeholder="Lien vidéo (YouTube / Vimeo / MP4)"
+              placeholder="Lien vidéo de diffusion directe"
               placeholderTextColor={colors.TEXT_FAINT}
               value={videoUrl}
               onChangeText={setVideoUrl}
@@ -782,6 +760,11 @@ const styles = StyleSheet.create({
     borderRadius: RADII.lg,
     padding: 10,
     marginVertical: 6,
+  },
+  videoTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   previewVideoTitle: {
     fontWeight: '800',

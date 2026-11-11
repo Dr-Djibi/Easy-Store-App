@@ -6,17 +6,40 @@ export interface ContentBlock {
   imageUrl?: string;
 }
 
+export type ProductStatus = 'actif' | 'brouillon' | 'archivé';
+
+export interface ProductVariant {
+  id: string;
+  option_name: string;
+  option_values: string[];
+}
+
 export interface Product {
   id: string;
   slug: string;
   nom: string;
   prix: number;
+  prix_comparaison?: number | null;
+  cout_achat?: number | null;
+  facturer_taxe?: boolean;
   stock: number;
-  cout_achat?: number;
+  sku?: string | null;
+  code_barre?: string | null;
+  suivre_stock?: boolean;
+  vendre_en_rupture?: boolean;
+  produit_physique?: boolean;
+  poids?: number | null;
+  unite_poids?: 'kg' | 'g' | 'lb' | 'oz';
   description: string | null;
   images: string[];
   content_blocks: ContentBlock[];
   actif: boolean;
+  statut?: ProductStatus;
+  categorie?: string | null;
+  type_produit?: string | null;
+  fournisseur?: string | null;
+  balises?: string[];
+  variantes?: ProductVariant[];
   created_at: string;
 }
 

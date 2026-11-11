@@ -1,63 +1,62 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Alert } from 'react-native';
 import { getAllSettings, updateSetting } from '@/lib/settings';
 
-interface SettingsForm {
-  storeName: string;
-  whatsapp: string;
-  phone: string;
-  bannerTitle: string;
-  bannerSubtitle: string;
-}
-
 export function useSettings() {
-  const [form, setForm] = useState<SettingsForm>({
+  const [form, setForm] = useState({
     storeName: '',
     whatsapp: '',
     phone: '',
     bannerTitle: '',
     bannerSubtitle: '',
   });
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = async () => {
     setLoading(true);
     try {
-      const s = await getAllSettings();
+      const data = await getAllSettings();
       setForm({
-        storeName: s.STORE_NAME || '',
-        whatsapp: s.WHATSAPP_NUMBER || '',
-        phone: s.STORE_PHONE || '',
-        bannerTitle: s.STORE_BANNER_TITLE || '',
-        bannerSubtitle: s.STORE_BANNER_SUBTITLE || '',
+        storeName: data.STORE_NAME || '',
+        whatsapp: data.WHATSAPP_NUMBER || '',
+        phone: data.STORE_PHONE || '',
+        bannerTitle: data.STORE_BANNER_TITLE || '',
+        bannerSubtitle: data.STORE_BANNER_SUBTITLE || '',
       });
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const save = useCallback(async () => {
+  const save = async () => {
     setSaving(true);
     try {
-      const results = await Promise.all([
-        updateSetting('STORE_NAME', form.storeName),
-        updateSetting('WHATSAPP_NUMBER', form.whatsapp),
-        updateSetting('STORE_PHONE', form.phone),
-        updateSetting('STORE_BANNER_TITLE', form.bannerTitle),
-        updateSetting('STORE_BANNER_SUBTITLE', form.bannerSubtitle),
-      ]);
-      const failed = results.find((r) => !r.success);
-      if (failed) {
-        throw new Error(failed.error || 'Erreur lors de la sauvegarde.');
+      const entries: [string, string][] = [
+        ['STORE_NAME', form.storeName],
+        ['WHATSAPP_NUMBER', form.whatsapp],
+        ['STORE_PHONE', form.phone],
+        ['STORE_BANNER_TITLE', form.bannerTitle],
+        ['STORE_BANNER_SUBTITLE', form.bannerSubtitle],
+      ];
+
+      for (const [k, v] of entries) {
+        const res = await updateSetting(k, v);
+        if (!res.success) {
+          throw new Error(res.error || 'Erreur lors de la mise à jour.');
+        }
       }
-      Alert.alert('Succès 🎉', 'Paramètres de la boutique mis à jour !');
-    } catch (err: unknown) {
-      Alert.alert('Erreur', err instanceof Error ? err.message : 'Impossible de sauvegarder les paramètres.');
+
+      Alert.alert('Succès', 'Paramètres de la boutique mis à jour.');
+    } catch (e: unknown) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Erreur inconnue.');
     } finally {
       setSaving(false);
     }
-  }, [form]);
+  };
 
   return { form, setForm, loading, saving, load, save };
 }

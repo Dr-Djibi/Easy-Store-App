@@ -1,25 +1,51 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
-import { ArrowUp, ArrowDown, Trash2, ImagePlus } from 'lucide-react-native';
-import { pickAndUploadImage } from '../../lib/storage';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import {
+  Plus,
+  Trash2,
+  Image as ImageIcon,
+  Type,
+  FileText,
+  MoveUp,
+  MoveDown,
+  Layers,
+} from 'lucide-react-native';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { SPACING, RADII, FONT_SIZE } from '@/constants/theme';
-import type { ContentBlock } from '../../types';
+import { pickAndUploadImage } from '@/lib/storage';
+import type { ContentBlock } from '@/types';
 
-export default function BlockEditor({
-  blocks,
-  onChange,
-}: {
+interface BlockEditorProps {
   blocks: ContentBlock[];
   onChange: (blocks: ContentBlock[]) => void;
-}) {
-  const { colors, isDark } = useAppTheme();
-  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+}
 
-  const addBlock = () => {
+const BLOCK_TYPES = [
+  { type: 'titre' as const, label: 'Titre d\'impact', icon: Type },
+  { type: 'texte' as const, label: 'Paragraphe', icon: FileText },
+  { type: 'image' as const, label: 'Bannière visuelle', icon: ImageIcon },
+  { type: 'titre+texte' as const, label: 'Titre et Argumentaire', icon: Layers },
+  { type: 'titre+texte+image' as const, label: 'Bloc promotionnel complet', icon: Layers },
+];
+
+export default function BlockEditor({ blocks, onChange }: BlockEditorProps) {
+  const { colors } = useAppTheme();
+  const [uploadingBlockId, setUploadingBlockId] = useState<string | null>(null);
+
+  const addBlock = (type: ContentBlock['type']) => {
     const newBlock: ContentBlock = {
-      id: Math.random().toString(36).substring(2, 9),
-      type: 'titre+texte+image',
+      id: Date.now().toString(),
+      type,
       titre: '',
       texte: '',
       imageUrl: '',
@@ -27,311 +53,325 @@ export default function BlockEditor({
     onChange([...blocks, newBlock]);
   };
 
-  const updateBlock = (index: number, patch: Partial<ContentBlock>) => {
-    const next = [...blocks];
-    next[index] = { ...next[index], ...patch };
-    onChange(next);
+  const updateBlock = (id: string, updates: Partial<ContentBlock>) => {
+    onChange(blocks.map((b) => (b.id === id ? { ...b, ...updates } : b)));
   };
 
-  const handlePickBlockImage = async (index: number) => {
-    setUploadingIdx(index);
+  const removeBlock = (id: string) => {
+    onChange(blocks.filter((b) => b.id !== id));
+  };
+
+  const moveBlock = (index: number, direction: 'up' | 'down') => {
+    const nextIndex = direction === 'up' ? index - 1 : index + 1;
+    if (nextIndex < 0 || nextIndex >= blocks.length) return;
+
+    const copy = [...blocks];
+    const [moved] = copy.splice(index, 1);
+    copy.splice(nextIndex, 0, moved);
+    onChange(copy);
+  };
+
+  const handlePickBlockImage = async (id: string) => {
+    setUploadingBlockId(id);
     try {
       const res = await pickAndUploadImage();
       if (res.success && res.url) {
-        updateBlock(index, { imageUrl: res.url });
+        updateBlock(id, { imageUrl: res.url });
       } else if (res.error) {
-        Alert.alert('Erreur Upload', res.error);
+        Alert.alert('Erreur', res.error);
       }
+    } catch {
+      Alert.alert('Erreur', 'Impossible de charger l\'image.');
     } finally {
-      setUploadingIdx(null);
+      setUploadingBlockId(null);
     }
   };
 
-  const removeBlock = (index: number) => {
-    onChange(blocks.filter((_, i) => i !== index));
-  };
-
-  const moveUp = (index: number) => {
-    if (index === 0) return;
-    const next = [...blocks];
-    [next[index - 1], next[index]] = [next[index], next[index - 1]];
-    onChange(next);
-  };
-
-  const moveDown = (index: number) => {
-    if (index === blocks.length - 1) return;
-    const next = [...blocks];
-    [next[index], next[index + 1]] = [next[index + 1], next[index]];
-    onChange(next);
-  };
-
   return (
-    <View style={styles.container}>
-      <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
-        Blocs de Persuasion (Rich-Content Maestro)
-      </Text>
-      <Text style={[styles.subtitle, { color: colors.TEXT_MUTED }]}>
-        Structurez une page de vente persuasive avec des titres percutants, des preuves et des visuels.
-      </Text>
-
-      {blocks.map((block, idx) => (
-        <View
-          key={block.id}
-          style={[
-            styles.blockCard,
-            {
-              backgroundColor: colors.BG_CARD,
-              borderColor: colors.BORDER,
-              shadowColor: colors.TEXT_PRIMARY,
-              shadowOpacity: isDark ? 0 : 0.04,
-              elevation: isDark ? 0 : 1,
-            },
-          ]}
-        >
-          <View style={styles.headerRow}>
-            <Text style={[styles.blockNumber, { color: colors.ACCENT }]}>Bloc d'argumentaire #{idx + 1}</Text>
-            <View style={styles.actionsRow}>
-              {idx > 0 && (
-                <TouchableOpacity
-                  onPress={() => moveUp(idx)}
-                  style={[styles.iconBtn, { backgroundColor: colors.BG_INPUT }]}
-                >
-                  <ArrowUp size={16} color={colors.ACCENT} />
-                </TouchableOpacity>
-              )}
-              {idx < blocks.length - 1 && (
-                <TouchableOpacity
-                  onPress={() => moveDown(idx)}
-                  style={[styles.iconBtn, { backgroundColor: colors.BG_INPUT }]}
-                >
-                  <ArrowDown size={16} color={colors.ACCENT} />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                onPress={() => removeBlock(idx)}
-                style={[styles.iconBtn, { backgroundColor: colors.DANGER_BG_LIGHT }]}
-              >
-                <Trash2 size={16} color={colors.DANGER} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <TextInput
-            placeholder="Grand Titre d'accroche (bénéfice client)"
-            placeholderTextColor={colors.TEXT_FAINT}
-            value={block.titre || ''}
-            onChangeText={(txt) => updateBlock(idx, { titre: txt })}
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.BG_INPUT,
-                borderColor: colors.BORDER,
-                color: colors.TEXT_PRIMARY,
-              },
-            ]}
-          />
-
-          <TextInput
-            placeholder="Texte de vente / Paragraphe explicatif persuasif..."
-            placeholderTextColor={colors.TEXT_FAINT}
-            value={block.texte || ''}
-            onChangeText={(txt) => updateBlock(idx, { texte: txt })}
-            style={[
-              styles.input,
-              styles.textArea,
-              {
-                backgroundColor: colors.BG_INPUT,
-                borderColor: colors.BORDER,
-                color: colors.TEXT_PRIMARY,
-              },
-            ]}
-            multiline
-            numberOfLines={4}
-          />
-
-          <View style={styles.imagePickerRow}>
-            <TouchableOpacity
-              onPress={() => handlePickBlockImage(idx)}
-              disabled={uploadingIdx === idx}
-              style={[
-                styles.pickBtn,
-                {
-                  backgroundColor: colors.BG_INPUT,
-                  borderColor: colors.ACCENT,
-                },
-              ]}
-            >
-              {uploadingIdx === idx ? (
-                <ActivityIndicator size="small" color={colors.ACCENT} />
-              ) : (
-                <>
-                  <ImagePlus size={15} color={colors.ACCENT} />
-                  <Text style={[styles.pickBtnText, { color: colors.ACCENT }]}>Photo</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TextInput
-              placeholder="Ou URL de l'image d'illustration"
-              placeholderTextColor={colors.TEXT_FAINT}
-              value={block.imageUrl || ''}
-              onChangeText={(txt) => updateBlock(idx, { imageUrl: txt })}
-              style={[
-                styles.input,
-                {
-                  flex: 1,
-                  marginBottom: 0,
-                  backgroundColor: colors.BG_INPUT,
-                  borderColor: colors.BORDER,
-                  color: colors.TEXT_PRIMARY,
-                },
-              ]}
-            />
-          </View>
-
-          {/* Aperçu image isolé sans débordement */}
-          {block.imageUrl ? (
-            <View style={[styles.previewWrapper, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}>
-              <View style={styles.previewImageContainer}>
-                <Image source={{ uri: block.imageUrl }} style={styles.imagePreview} resizeMode="cover" />
-              </View>
-              <TouchableOpacity
-                onPress={() => updateBlock(idx, { imageUrl: '' })}
-                style={styles.removeBlockImageBtn}
-              >
-                <Trash2 size={13} color={colors.DANGER} />
-                <Text style={[styles.removeBlockImageText, { color: colors.DANGER }]}>Supprimer</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
+    <View style={[styles.container, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}>
+      <View style={styles.header}>
+        <View>
+          <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
+            Blocs de Contenu Enrichis
+          </Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.TEXT_MUTED }]}>
+            Structurez votre page produit avec des sections visuelles.
+          </Text>
         </View>
-      ))}
+      </View>
 
-      <TouchableOpacity
-        onPress={addBlock}
-        style={[
-          styles.addBtn,
-          {
-            borderColor: colors.ACCENT,
-            backgroundColor: colors.ACCENT_BG,
-          },
-        ]}
-      >
-        <Text style={[styles.addBtnText, { color: colors.ACCENT }]}>+ Ajouter un bloc d'argumentaire</Text>
-      </TouchableOpacity>
+      {/* LISTE DES BLOCS EXISTANTS */}
+      {blocks.map((block, index) => {
+        const hasTitre = block.type.includes('titre');
+        const hasTexte = block.type.includes('texte');
+        const hasImage = block.type.includes('image');
+
+        return (
+          <View
+            key={block.id}
+            style={[styles.blockCard, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}
+          >
+            {/* EN-TÊTE DU BLOC */}
+            <View style={[styles.blockHeader, { borderBottomColor: colors.BORDER }]}>
+              <View style={styles.blockTitleRow}>
+                <Layers size={15} color={colors.ACCENT} />
+                <Text style={[styles.blockTypeName, { color: colors.TEXT_PRIMARY }]}>
+                  {BLOCK_TYPES.find((b) => b.type === block.type)?.label || block.type}
+                </Text>
+              </View>
+
+              <View style={styles.blockActions}>
+                <TouchableOpacity
+                  onPress={() => moveBlock(index, 'up')}
+                  disabled={index === 0}
+                  style={[styles.actionBtn, index === 0 && styles.disabledBtn]}
+                >
+                  <MoveUp size={14} color={index === 0 ? colors.TEXT_FAINT : colors.TEXT_MUTED} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => moveBlock(index, 'down')}
+                  disabled={index === blocks.length - 1}
+                  style={[styles.actionBtn, index === blocks.length - 1 && styles.disabledBtn]}
+                >
+                  <MoveDown size={14} color={index === blocks.length - 1 ? colors.TEXT_FAINT : colors.TEXT_MUTED} />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => removeBlock(block.id)} style={styles.actionBtn}>
+                  <Trash2 size={14} color={colors.DANGER} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* CONTENU DU BLOC SELON SON TYPE */}
+            <View style={styles.blockBody}>
+              {hasTitre && (
+                <View style={styles.field}>
+                  <Text style={[styles.label, { color: colors.TEXT_MUTED }]}>Titre de la section</Text>
+                  <TextInput
+                    placeholder="Grand Titre d'accroche et bénéfice client"
+                    placeholderTextColor={colors.TEXT_FAINT}
+                    value={block.titre || ''}
+                    onChangeText={(v) => updateBlock(block.id, { titre: v })}
+                    style={[styles.input, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER, color: colors.TEXT_PRIMARY }]}
+                  />
+                </View>
+              )}
+
+              {hasTexte && (
+                <View style={styles.field}>
+                  <Text style={[styles.label, { color: colors.TEXT_MUTED }]}>Texte explicatif</Text>
+                  <TextInput
+                    placeholder="Détaillez les caractéristiques remarquables..."
+                    placeholderTextColor={colors.TEXT_FAINT}
+                    value={block.texte || ''}
+                    onChangeText={(v) => updateBlock(block.id, { texte: v })}
+                    multiline
+                    style={[styles.textArea, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER, color: colors.TEXT_PRIMARY }]}
+                  />
+                </View>
+              )}
+
+              {hasImage && (
+                <View style={styles.field}>
+                  <Text style={[styles.label, { color: colors.TEXT_MUTED }]}>Image illustrative</Text>
+
+                  {block.imageUrl ? (
+                    <View style={[styles.imagePreviewWrap, { borderColor: colors.BORDER }]}>
+                      <Image source={{ uri: block.imageUrl }} style={styles.imagePreview} resizeMode="cover" />
+                      <TouchableOpacity
+                        onPress={() => updateBlock(block.id, { imageUrl: '' })}
+                        style={styles.deleteImageBtn}
+                      >
+                        <Trash2 size={14} color="#ffffff" />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => handlePickBlockImage(block.id)}
+                      disabled={uploadingBlockId === block.id}
+                      style={[styles.uploadBox, { backgroundColor: colors.BG_CARD, borderColor: colors.BORDER }]}
+                    >
+                      {uploadingBlockId === block.id ? (
+                        <ActivityIndicator size="small" color={colors.ACCENT} />
+                      ) : (
+                        <>
+                          <ImageIcon size={20} color={colors.ACCENT} />
+                          <Text style={[styles.uploadText, { color: colors.TEXT_PRIMARY }]}>
+                            Sélectionner une photo
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
+        );
+      })}
+
+      {/* BOUTONS D'AJOUT DE BLOC */}
+      <View style={styles.addButtonsContainer}>
+        <Text style={[styles.addLabel, { color: colors.TEXT_MUTED }]}>Ajouter un bloc :</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.addButtonsScroll}>
+          {BLOCK_TYPES.map((bt) => {
+            const Icon = bt.icon;
+            return (
+              <TouchableOpacity
+                key={bt.type}
+                onPress={() => addBlock(bt.type)}
+                style={[styles.addTypeBtn, { backgroundColor: colors.BG_INPUT, borderColor: colors.BORDER }]}
+                activeOpacity={0.7}
+              >
+                <Plus size={13} color={colors.ACCENT} />
+                <Icon size={14} color={colors.TEXT_PRIMARY} />
+                <Text style={[styles.addTypeBtnText, { color: colors.TEXT_PRIMARY }]}>{bt.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: SPACING.md,
+    borderWidth: 1,
+    borderRadius: RADII.xl,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  header: {
+    marginBottom: SPACING.md,
   },
   sectionTitle: {
     fontSize: FONT_SIZE.base,
-    fontWeight: '800',
-    marginBottom: 4,
+    fontWeight: '700',
   },
-  subtitle: {
+  sectionSubtitle: {
     fontSize: FONT_SIZE.xs,
-    marginBottom: SPACING.md,
-    lineHeight: 18,
+    marginTop: 2,
+    lineHeight: 16,
   },
   blockCard: {
     borderWidth: 1,
-    borderRadius: RADII.xl,
-    padding: SPACING.md,
+    borderRadius: RADII.lg,
     marginBottom: SPACING.md,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 4,
+    overflow: 'hidden',
   },
-  headerRow: {
+  blockHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
   },
-  blockNumber: {
-    fontSize: FONT_SIZE.xs,
-    fontWeight: '800',
-  },
-  actionsRow: {
+  blockTitleRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  blockTypeName: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '700',
+  },
+  blockActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionBtn: {
+    padding: 6,
+    borderRadius: RADII.sm,
+  },
+  disabledBtn: {
+    opacity: 0.3,
+  },
+  blockBody: {
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  },
+  field: {
     gap: 6,
   },
-  iconBtn: {
-    padding: 6,
-    borderRadius: RADII.md,
+  label: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
   },
   input: {
     borderWidth: 1,
-    borderRadius: RADII.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: RADII.md,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     fontSize: FONT_SIZE.sm,
-    marginBottom: SPACING.sm,
   },
   textArea: {
-    height: 75,
+    borderWidth: 1,
+    borderRadius: RADII.md,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: FONT_SIZE.sm,
+    minHeight: 70,
     textAlignVertical: 'top',
   },
-  imagePickerRow: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  pickBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+  uploadBox: {
     borderWidth: 1,
-    borderRadius: RADII.lg,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    borderStyle: 'dashed',
+    borderRadius: RADII.md,
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
-  pickBtnText: {
-    fontWeight: '700',
+  uploadText: {
     fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
   },
-  previewWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    padding: 6,
-    borderRadius: RADII.lg,
+  imagePreviewWrap: {
     borderWidth: 1,
-  },
-  previewImageContainer: {
-    width: 48,
-    height: 48,
     borderRadius: RADII.md,
     overflow: 'hidden',
+    position: 'relative',
+    height: 140,
   },
   imagePreview: {
     width: '100%',
     height: '100%',
   },
-  removeBlockImageBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
+  deleteImageBtn: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: 'rgba(220, 38, 38, 0.85)',
+    padding: 6,
+    borderRadius: RADII.sm,
+  },
+  addButtonsContainer: {
+    marginTop: 4,
+    gap: 8,
+  },
+  addLabel: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+  },
+  addButtonsScroll: {
+    gap: 8,
     paddingVertical: 4,
   },
-  removeBlockImageText: {
-    fontSize: FONT_SIZE.xs,
-    fontWeight: '700',
-  },
-  addBtn: {
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderRadius: RADII.xl,
-    paddingVertical: 14,
+  addTypeBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADII.md,
+    borderWidth: 1,
   },
-  addBtnText: {
-    fontWeight: '800',
-    fontSize: FONT_SIZE.sm,
+  addTypeBtnText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
   },
 });
