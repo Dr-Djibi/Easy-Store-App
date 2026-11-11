@@ -12,6 +12,7 @@ export interface Product {
   nom: string;
   prix: number;
   stock: number;
+  cout_achat?: number;
   description: string | null;
   images: string[];
   content_blocks: ContentBlock[];
@@ -56,6 +57,6 @@ export interface Order {
   quantite: number;
   montant: number;
   fields_data: Record<string, string>;
-  statut: 'nouveau' | 'confirmé' | 'livré' | 'annulé';
+  statut: 'nouveau' | 'confirmé' | 'en_livraison' | 'livré' | 'retourné' | 'annulé';
   created_at: string;
 }

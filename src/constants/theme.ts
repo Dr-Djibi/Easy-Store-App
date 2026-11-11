@@ -1,79 +1,79 @@
 // ============================================================
-// Theme Tokens — Thème Clair (Light First) & Thème Sombre
+// Theme Tokens — Senior Developer Obsidian Minimalist & Clean Light
 // ============================================================
 
 export const THEME_LIGHT = {
-  // Backgrounds
-  BG_PRIMARY: '#f8fafc',    // Fond doux et moderne (slate-50)
-  BG_CARD: '#ffffff',       // Blanc pur pour cartes et conteneurs
-  BG_INPUT: '#f1f5f9',      // Input gris très clair neutre (slate-100)
-  BG_SURFACE_ALT: '#e2e8f0', // Surface alternative subtile
+  // Backgrounds - Modern Clean Slate
+  BG_PRIMARY: '#f8fafc',      // Slate-50 ultra-propre
+  BG_CARD: '#ffffff',         // Blanc pur pour les cartes
+  BG_INPUT: '#f1f5f9',        // Slate-100 neutre
+  BG_SURFACE_ALT: '#e2e8f0',   // Slate-200 pour délimitations
 
   // Text
-  TEXT_PRIMARY: '#0f172a',  // Noir ardoise profond, lisibilité maximale (slate-900)
-  TEXT_MUTED: '#64748b',    // Gris ardoise médian pour labels (slate-500)
-  TEXT_FAINT: '#94a3b8',    // Gris clair pour placeholders (slate-400)
+  TEXT_PRIMARY: '#0f172a',    // Noir ardoise profond (Slate-900)
+  TEXT_MUTED: '#64748b',      // Slate-500 pour labels
+  TEXT_FAINT: '#94a3b8',      // Slate-400 placeholders
 
   // Borders
-  BORDER: '#e2e8f0',        // Délimitation fine et discrète
-  BORDER_FAINT: '#f1f5f9',  // Bordure ultra subtile
+  BORDER: '#e2e8f0',          // Bordure fine
+  BORDER_FAINT: '#f1f5f9',    // Bordure subtile
 
-  // Accents & Actions
-  ACCENT: '#d97706',        // Ambre doré chaleureux (bonne visibilité sur blanc)
-  ACCENT_BG: 'rgba(217, 119, 6, 0.12)',
-  INFO: '#0284c7',          // Bleu d'information (sky-600)
-  INFO_BG: 'rgba(2, 132, 199, 0.12)',
-  SUCCESS: '#16a34a',       // Vert émeraude validation (green-600)
-  SUCCESS_BG: 'rgba(22, 163, 74, 0.12)',
-  DANGER: '#dc2626',        // Rouge alerte (red-600)
-  DANGER_BG: 'rgba(220, 38, 38, 0.12)',
-  DANGER_BG_LIGHT: 'rgba(220, 38, 38, 0.08)',
-  DANGER_BORDER: 'rgba(220, 38, 38, 0.25)',
-  MUTED_BG: 'rgba(100, 116, 139, 0.10)',
+  // Accent Senior Dev : Indigo / Noir élégant
+  ACCENT: '#0f172a',          // Noir profond / Slate-900 pur pour actions principales
+  ACCENT_BG: 'rgba(15, 23, 42, 0.08)',
+  INFO: '#2563eb',            // Bleu corporate
+  INFO_BG: 'rgba(37, 99, 235, 0.08)',
+  SUCCESS: '#16a34a',         // Vert émeraude sobre
+  SUCCESS_BG: 'rgba(22, 163, 74, 0.08)',
+  DANGER: '#dc2626',          // Rouge sobre
+  DANGER_BG: 'rgba(220, 38, 38, 0.08)',
+  DANGER_BG_LIGHT: 'rgba(220, 38, 38, 0.05)',
+  DANGER_BORDER: 'rgba(220, 38, 38, 0.20)',
+  MUTED_BG: 'rgba(100, 116, 139, 0.08)',
 
   // Bottom Navigation Bar
   NAV_BG: '#ffffff',
-  NAV_BORDER: 'rgba(226, 232, 240, 0.9)',
-  NAV_ACTIVE: '#d97706',
+  NAV_BORDER: '#e2e8f0',
+  NAV_ACTIVE: '#0f172a',
   NAV_INACTIVE: '#94a3b8',
-  NAV_SHADOW: 'rgba(15, 23, 42, 0.08)',
+  NAV_SHADOW: 'rgba(15, 23, 42, 0.06)',
 } as const;
 
 export const THEME_DARK = {
-  // Backgrounds
-  BG_PRIMARY: '#060501',
-  BG_CARD: '#100e04',
-  BG_INPUT: '#18160a',
-  BG_SURFACE_ALT: '#221f0f',
+  // Backgrounds - Obsidian Deep Slate (fini le jaune criard, place au luxe sobre)
+  BG_PRIMARY: '#090a0f',      // Noir bleuté profond
+  BG_CARD: '#12141c',         // Surface surélevée Slate sombre
+  BG_INPUT: '#1a1d27',        // Surface d'input sobre
+  BG_SURFACE_ALT: '#222634',   // Surface de séparation
 
   // Text
-  TEXT_PRIMARY: '#fef9e7',
-  TEXT_MUTED: 'rgba(254, 249, 231, 0.65)',
-  TEXT_FAINT: 'rgba(254, 249, 231, 0.40)',
+  TEXT_PRIMARY: '#f8fafc',    // Blanc pur anti-reflet
+  TEXT_MUTED: '#94a3b8',      // Slate doux pour descriptions
+  TEXT_FAINT: '#64748b',      // Placeholders
 
   // Borders
-  BORDER: 'rgba(255, 255, 255, 0.12)',
-  BORDER_FAINT: 'rgba(255, 255, 255, 0.08)',
+  BORDER: 'rgba(255, 255, 255, 0.08)',
+  BORDER_FAINT: 'rgba(255, 255, 255, 0.04)',
 
-  // Accents & Actions
-  ACCENT: '#facc15',
-  ACCENT_BG: 'rgba(250, 204, 21, 0.20)',
-  INFO: '#38bdf8',
-  INFO_BG: 'rgba(56, 189, 248, 0.20)',
-  SUCCESS: '#4ade80',
-  SUCCESS_BG: 'rgba(74, 222, 128, 0.20)',
-  DANGER: '#ef4444',
-  DANGER_BG: 'rgba(239, 68, 68, 0.20)',
-  DANGER_BG_LIGHT: 'rgba(239, 68, 68, 0.15)',
-  DANGER_BORDER: 'rgba(239, 68, 68, 0.30)',
-  MUTED_BG: 'rgba(148, 163, 184, 0.15)',
+  // Accent Senior Dev : Blanc titane / Indigo néon sobre
+  ACCENT: '#f8fafc',          // Blanc titane éclatant
+  ACCENT_BG: 'rgba(248, 250, 252, 0.12)',
+  INFO: '#38bdf8',            // Bleu glacier
+  INFO_BG: 'rgba(56, 189, 248, 0.12)',
+  SUCCESS: '#34d399',         // Vert menthe sobre
+  SUCCESS_BG: 'rgba(52, 211, 153, 0.12)',
+  DANGER: '#f87171',          // Rouge doux
+  DANGER_BG: 'rgba(248, 113, 113, 0.12)',
+  DANGER_BG_LIGHT: 'rgba(248, 113, 113, 0.08)',
+  DANGER_BORDER: 'rgba(248, 113, 113, 0.25)',
+  MUTED_BG: 'rgba(148, 163, 184, 0.10)',
 
   // Bottom Navigation Bar
-  NAV_BG: '#100e04',
-  NAV_BORDER: 'rgba(255, 255, 255, 0.12)',
-  NAV_ACTIVE: '#facc15',
-  NAV_INACTIVE: 'rgba(254, 249, 231, 0.45)',
-  NAV_SHADOW: 'rgba(0, 0, 0, 0.40)',
+  NAV_BG: '#12141c',
+  NAV_BORDER: 'rgba(255, 255, 255, 0.08)',
+  NAV_ACTIVE: '#f8fafc',
+  NAV_INACTIVE: '#64748b',
+  NAV_SHADOW: 'rgba(0, 0, 0, 0.50)',
 } as const;
 
 // Compatibilité descendante directe

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet, Platform } from 'react-native';
-import { LayoutDashboard, ShoppingBag, Package, SlidersHorizontal } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/hooks/useAppTheme';
 
 export default function AdminLayout() {
@@ -55,7 +55,7 @@ export default function AdminLayout() {
           title: 'Accueil',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && { backgroundColor: colors.ACCENT_BG }]}>
-              <LayoutDashboard color={color} size={focused ? 22 : 20} strokeWidth={focused ? 2.5 : 1.8} />
+              <Ionicons name={focused ? 'grid' : 'grid-outline'} color={color} size={20} />
             </View>
           ),
         }}
@@ -66,7 +66,7 @@ export default function AdminLayout() {
           title: 'Commandes',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && { backgroundColor: colors.ACCENT_BG }]}>
-              <ShoppingBag color={color} size={focused ? 22 : 20} strokeWidth={focused ? 2.5 : 1.8} />
+              <Ionicons name={focused ? 'bag-handle' : 'bag-handle-outline'} color={color} size={20} />
             </View>
           ),
         }}
@@ -78,7 +78,7 @@ export default function AdminLayout() {
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && { backgroundColor: colors.ACCENT_BG }]}>
-              <Package color={color} size={focused ? 22 : 20} strokeWidth={focused ? 2.5 : 1.8} />
+              <Ionicons name={focused ? 'cube' : 'cube-outline'} color={color} size={20} />
             </View>
           ),
         }}
@@ -89,7 +89,7 @@ export default function AdminLayout() {
           title: 'Paramètres',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrap, focused && { backgroundColor: colors.ACCENT_BG }]}>
-              <SlidersHorizontal color={color} size={focused ? 22 : 20} strokeWidth={focused ? 2.5 : 1.8} />
+              <Ionicons name={focused ? 'settings' : 'settings-outline'} color={color} size={20} />
             </View>
           ),
         }}

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Easy Store",
-    "slug": "easy-store-admin",
+    "name": "Easyphy",
+    "slug": "easyphy",
     "version": "1.0.0",
     "orientation": "portrait",
     "owner": "dr-djibi",
-    "scheme": "easystore",
+    "scheme": "easyphy",
     "userInterfaceStyle": "dark",
     "icon": "./assets/icon.png",
     "splash": {
@@ -15,11 +15,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.easystore.admin",
+      "bundleIdentifier": "com.easyphy.app",
       "icon": "./assets/icon.png"
     },
     "android": {
-      "package": "com.easystore.admin",
+      "package": "com.easyphy.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#060501"
@@ -38,7 +38,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Easy Store a besoin d'accéder à vos photos pour ajouter des visuels à vos produits."
+          "photosPermission": "Easyphy a besoin d'accéder à vos photos pour ajouter des visuels à vos produits."
         }
       ],
       "expo-asset"

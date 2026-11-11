@@ -26,6 +26,9 @@ export default function RootLayout() {
 
     client.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+    }).catch((err) => {
+      console.error('Erreur getSession:', err);
+      setLoading(false);
     });
 
     const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
@@ -50,7 +53,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="config" options={{ title: 'Liaison Supabase' }} />
-        <Stack.Screen name="login" options={{ title: 'Connexion Admin' }} />
+        <Stack.Screen name="login" options={{ title: 'Easyphy' }} />
         <Stack.Screen name="(admin)" options={{ headerShown: false }} />
       </Stack>
     </>

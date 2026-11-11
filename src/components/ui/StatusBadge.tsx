@@ -14,10 +14,12 @@ export function StatusBadge({ statut }: StatusBadgeProps) {
   const { colors } = useAppTheme();
 
   const badgeMap: Record<Statut, { bg: string; text: string }> = {
-    nouveau:  { bg: colors.ACCENT_BG,  text: colors.ACCENT },
-    confirmé: { bg: colors.INFO_BG,    text: colors.INFO },
-    livré:    { bg: colors.SUCCESS_BG, text: colors.SUCCESS },
-    annulé:   { bg: colors.DANGER_BG,  text: colors.DANGER },
+    nouveau:      { bg: colors.ACCENT_BG,  text: colors.ACCENT },
+    confirmé:     { bg: colors.INFO_BG,    text: colors.INFO },
+    en_livraison: { bg: colors.INFO_BG,    text: colors.INFO },
+    livré:        { bg: colors.SUCCESS_BG, text: colors.SUCCESS },
+    retourné:     { bg: 'rgba(249, 115, 22, 0.15)', text: '#f97316' }, // Orange attention
+    annulé:       { bg: colors.DANGER_BG,  text: colors.DANGER },
   };
 
   const current = badgeMap[statut] ?? badgeMap.nouveau;

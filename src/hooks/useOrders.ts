@@ -18,12 +18,12 @@ export function useOrders() {
   }, []);
 
   const changeStatus = useCallback((order: Order) => {
-    const statuses: Order['statut'][] = ['nouveau', 'confirmé', 'livré', 'annulé'];
+    const statuses: Order['statut'][] = ['nouveau', 'confirmé', 'en_livraison', 'livré', 'retourné', 'annulé'];
     Alert.alert(
       'Mettre à jour le statut',
       `Modifier l'état de la commande pour ${order.product_nom}`,
       statuses.map((st) => ({
-        text: st.toUpperCase(),
+        text: st.toUpperCase().replace('_', ' '),
         onPress: async () => {
           await updateOrderStatus(order.id, st);
           refresh();

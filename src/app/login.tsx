@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useSupabaseStore } from '../store/supabaseStore';
 
@@ -10,6 +11,13 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Pré-remplir automatiquement le dernier email utilisé
+  useEffect(() => {
+    AsyncStorage.getItem('last_admin_email').then((savedEmail) => {
+      if (savedEmail) setEmail(savedEmail);
+    });
+  }, []);
 
   const handleLogin = async () => {
     if (!client) {
@@ -35,6 +43,8 @@ export default function LoginScreen() {
       }
 
       if (data.session) {
+        // Mémoriser l'email pour le confort de connexion
+        await AsyncStorage.setItem('last_admin_email', email.trim());
         router.replace('/(admin)');
       }
     } catch (err: unknown) {
@@ -47,8 +57,8 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Espace Administrateur</Text>
-        <Text style={styles.subtitle}>Connectez-vous pour piloter les produits et les commandes de votre boutique.</Text>
+        <Text style={styles.title}>Easyphy</Text>
+        <Text style={styles.subtitle}>Gérez vos produits, commandes et stocks en direct sur WhatsApp et le Web.</Text>
       </View>
 
       <View style={styles.card}>

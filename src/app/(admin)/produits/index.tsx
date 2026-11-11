@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Share } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Plus, Eye, EyeOff, Trash2, Edit } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useProducts } from '@/hooks/useProducts';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { EmptyState } from '@/components/ui';
@@ -13,6 +13,17 @@ export default function ProductsListScreen() {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
   const { products, loading, refresh, toggleActive, remove } = useProducts();
+
+  const handleShareProduct = async (item: Product) => {
+    try {
+      await Share.share({
+        message: `🛍️ Découvrez "${item.nom}" sur notre boutique Easyphy pour ${formatPrice(item.prix)} !\nCommandez vite sur WhatsApp.`,
+        title: item.nom,
+      });
+    } catch (e) {
+      // Ignorer si annulé
+    }
+  };
 
   useEffect(() => {
     refresh();
@@ -26,7 +37,7 @@ export default function ProductsListScreen() {
           onPress={() => router.push('/(admin)/produits/nouveau')}
           style={[styles.addBtn, { backgroundColor: colors.ACCENT }]}
         >
-          <Plus size={18} color={isDark ? '#060501' : '#ffffff'} />
+          <Ionicons name="add" size={18} color={isDark ? '#060501' : '#ffffff'} />
           <Text style={[styles.addBtnText, { color: isDark ? '#060501' : '#ffffff' }]}>Nouveau</Text>
         </TouchableOpacity>
       </View>
@@ -83,26 +94,32 @@ export default function ProductsListScreen() {
 
             <View style={styles.cardActions}>
               <TouchableOpacity
+                onPress={() => handleShareProduct(item)}
+                style={[styles.actionBtn, { backgroundColor: colors.BG_INPUT }]}
+              >
+                <Ionicons name="share-social-outline" size={17} color={colors.ACCENT} />
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={() => toggleActive(item.id, item.actif)}
                 style={[styles.actionBtn, { backgroundColor: colors.BG_INPUT }]}
               >
                 {item.actif ? (
-                  <Eye size={18} color={colors.SUCCESS} />
+                  <Ionicons name="eye-outline" size={17} color={colors.SUCCESS} />
                 ) : (
-                  <EyeOff size={18} color={colors.TEXT_MUTED} />
+                  <Ionicons name="eye-off-outline" size={17} color={colors.TEXT_MUTED} />
                 )}
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => router.push(`/(admin)/produits/${item.id}`)}
                 style={[styles.actionBtn, { backgroundColor: colors.BG_INPUT }]}
               >
-                <Edit size={18} color={colors.INFO} />
+                <Ionicons name="create-outline" size={17} color={colors.INFO} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => remove(item.id, item.nom)}
                 style={[styles.actionBtn, { backgroundColor: colors.DANGER_BG_LIGHT }]}
               >
-                <Trash2 size={18} color={colors.DANGER} />
+                <Ionicons name="trash-outline" size={17} color={colors.DANGER} />
               </TouchableOpacity>
             </View>
           </View>
