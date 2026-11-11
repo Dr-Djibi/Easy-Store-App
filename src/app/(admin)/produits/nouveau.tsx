@@ -45,6 +45,7 @@ export default function NewProductScreen() {
   const [slug, setSlug] = useState('');
   const [isCustomSlug, setIsCustomSlug] = useState(false);
   const [prix, setPrix] = useState('');
+  const [coutAchat, setCoutAchat] = useState('');
   const [stock, setStock] = useState('10');
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -127,6 +128,7 @@ export default function NewProductScreen() {
         nom: nom.trim(),
         slug: finalSlug,
         prix: Number(prix) || 0,
+        cout_achat: Number(coutAchat) || 0,
         stock: Number(stock) || 0,
         description: description.trim() || null,
         images: images,
@@ -324,10 +326,10 @@ export default function NewProductScreen() {
           </Text>
         </View>
 
-        {/* PRIX ET STOCK */}
+        {/* PRIX, COÛT D'ACHAT ET STOCK */}
         <View style={styles.row}>
           <View style={[styles.field, { flex: 1 }]}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Prix (GNF) *</Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Prix Vente *</Text>
             <TextInput
               placeholder="150000"
               placeholderTextColor={colors.TEXT_FAINT}
@@ -346,7 +348,26 @@ export default function NewProductScreen() {
           </View>
 
           <View style={[styles.field, { flex: 1 }]}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Stock en rayon</Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Coût Achat</Text>
+            <TextInput
+              placeholder="90000"
+              placeholderTextColor={colors.TEXT_FAINT}
+              value={coutAchat}
+              onChangeText={setCoutAchat}
+              keyboardType="numeric"
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.BG_CARD,
+                  borderColor: colors.BORDER,
+                  color: colors.TEXT_PRIMARY,
+                },
+              ]}
+            />
+          </View>
+
+          <View style={[styles.field, { flex: 1 }]}>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Stock</Text>
             <TextInput
               placeholder="10"
               placeholderTextColor={colors.TEXT_FAINT}

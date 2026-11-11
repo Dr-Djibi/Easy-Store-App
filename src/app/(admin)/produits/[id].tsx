@@ -45,6 +45,7 @@ export default function EditProductScreen() {
   const [nom, setNom] = useState('');
   const [slug, setSlug] = useState('');
   const [prix, setPrix] = useState('');
+  const [coutAchat, setCoutAchat] = useState('');
   const [stock, setStock] = useState('0');
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -71,6 +72,7 @@ export default function EditProductScreen() {
         setNom(p.nom);
         setSlug(p.slug || generateSlug(p.nom));
         setPrix(String(p.prix));
+        setCoutAchat(p.cout_achat ? String(p.cout_achat) : '');
         setStock(String(p.stock));
         setDescription(p.description || '');
         setImages(p.images && p.images.length > 0 ? p.images : []);
@@ -137,6 +139,7 @@ export default function EditProductScreen() {
         nom: nom.trim(),
         slug: finalSlug,
         prix: Number(prix) || 0,
+        cout_achat: Number(coutAchat) || 0,
         stock: Number(stock) || 0,
         description: description.trim() || null,
         images: images,
@@ -335,10 +338,10 @@ export default function EditProductScreen() {
           </Text>
         </View>
 
-        {/* PRIX ET STOCK */}
+        {/* PRIX, COÛT D'ACHAT ET STOCK */}
         <View style={styles.row}>
           <View style={[styles.field, { flex: 1 }]}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Prix (GNF) *</Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Prix Vente *</Text>
             <TextInput
               value={prix}
               onChangeText={setPrix}
@@ -355,7 +358,26 @@ export default function EditProductScreen() {
           </View>
 
           <View style={[styles.field, { flex: 1 }]}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Stock en rayon</Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Coût Achat</Text>
+            <TextInput
+              value={coutAchat}
+              placeholder="0"
+              placeholderTextColor={colors.TEXT_FAINT}
+              onChangeText={setCoutAchat}
+              keyboardType="numeric"
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.BG_CARD,
+                  borderColor: colors.BORDER,
+                  color: colors.TEXT_PRIMARY,
+                },
+              ]}
+            />
+          </View>
+
+          <View style={[styles.field, { flex: 1 }]}>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Stock</Text>
             <TextInput
               value={stock}
               onChangeText={setStock}
